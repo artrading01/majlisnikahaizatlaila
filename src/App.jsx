@@ -18,36 +18,29 @@ import {
   Heart, 
   Calendar, 
   MapPin, 
-  Clock, 
   Lock,
   Quote,
   CheckCircle2,
-  Volume2,
   VolumeX, 
-  Share2,
-  ChevronDown,
   Sparkles,
   Navigation,
   Map as MapIcon,
-  Timer,
   MailOpen,
-  ExternalLink,
   Music,
   UserCheck,
-  Users
+  Users,
+  ChevronDown
 } from 'lucide-react';
 
 // --- KONFIGURASI FIREBASE ---
 const firebaseConfig = typeof __firebase_config !== 'undefined' 
   ? JSON.parse(__firebase_config) 
-  : {
- apiKey: "AIzaSyAvo3MD7-kS7DJsgp0kfQdmRQyglsIzc2o",
+  : { apiKey: "AIzaSyAvo3MD7-kS7DJsgp0kfQdmRQyglsIzc2o",
   authDomain: "majlisnikahaizatlaila.firebaseapp.com",
   projectId: "majlisnikahaizatlaila",
   storageBucket: "majlisnikahaizatlaila.firebasestorage.app",
   messagingSenderId: "301347520690",
-  appId: "1:301347520690:web:06e7d407f0a7632a8849ab",
-    };
+  appId: "1:301347520690:web:06e7d407f0a7632a8849ab",};
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -64,27 +57,21 @@ const App = () => {
   const [submitted, setSubmitted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   
-  const [timeLeft, setTimeLeft] = useState({
-    hari: 0, jam: 0, minit: 0, saat: 0
-  });
-
+  const [timeLeft, setTimeLeft] = useState({ hari: 0, jam: 0, minit: 0, saat: 0 });
   const [adminPin, setAdminPin] = useState('');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   
   const audioRef = useRef(null);
   const CORRECT_PIN = "1234"; 
-
   const [guestName, setGuestName] = useState('');
 
-  // Ambil nama tetamu daripada URL parameter (?to=Nama)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const to = params.get('to');
     if (to) setGuestName(to);
   }, []);
 
-  // Countdown Timer
   useEffect(() => {
     const targetDate = new Date('2026-06-06T09:00:00');
     const timer = setInterval(() => {
@@ -104,7 +91,7 @@ const App = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Auth Firebase
+  // Auth Firebase - RULE 3
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -116,30 +103,28 @@ const App = () => {
       } catch (e) { console.error("Auth error:", e); }
     };
     initAuth();
-    const unsubscribe = onAuthStateChanged(auth, setUser);
+    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
     return () => unsubscribe();
   }, []);
 
-  // Ambil Data RSVP (Admin Sahaja)
+  // Ambil Data RSVP - RULE 1 & 2
   useEffect(() => {
     if (!user || !isAdminAuthenticated) return;
     const rsvpCol = collection(db, 'artifacts', appId, 'public', 'data', 'rsvp');
     const unsubRsvp = onSnapshot(rsvpCol, (s) => {
       setRsvpData(s.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, (e) => console.error("Firestore error:", e));
+    }, (e) => console.error("Firestore listen error:", e));
     return () => unsubRsvp();
   }, [user, isAdminAuthenticated]);
 
   const openInvitation = () => {
     setIsOpen(true);
     setView('invitation');
-    // Main audio sebaik sahaja dibuka
     if (audioRef.current) {
       audioRef.current.play().then(() => {
         setIsPlaying(true);
       }).catch((e) => {
         console.log("Audio playback failed:", e);
-        setIsPlaying(false);
       });
     }
   };
@@ -171,14 +156,16 @@ const App = () => {
     if (!form.name || !user) return;
     setLoading(true);
     try {
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'rsvp'), {
+      // RULE 1: Menggunakan path yang betul
+      const rsvpCol = collection(db, 'artifacts', appId, 'public', 'data', 'rsvp');
+      await addDoc(rsvpCol, {
         ...form,
         pax: parseInt(form.pax),
         timestamp: Date.now()
       });
       setSubmitted(true);
     } catch (err) { 
-      console.error(err); 
+      console.error("Submission error:", err); 
     } finally { 
       setLoading(false); 
     }
@@ -188,7 +175,6 @@ const App = () => {
     .filter(r => r.attendance === 'Hadir')
     .reduce((s, c) => s + (Number(c.pax) || 0), 0);
 
-  // --- UI ADMIN LOGIN ---
   if (showAdminLogin) {
     return (
         <div className="fixed inset-0 z-[300] bg-white flex items-center justify-center p-6 font-jakarta">
@@ -213,7 +199,6 @@ const App = () => {
     );
   }
 
-  // --- UI ADMIN PANEL ---
   if (view === 'admin' && isAdminAuthenticated) {
     return (
       <div className="min-h-screen bg-[#fcfaf8] p-4 md:p-10 font-jakarta text-stone-800">
@@ -232,13 +217,14 @@ const App = () => {
                     <p className="text-4xl font-black">{rsvpData.length}</p>
                 </div>
             </div>
-            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100">
+            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100 overflow-x-auto">
                 <table className="w-full text-left">
                     <thead className="bg-stone-50 text-[10px] uppercase font-bold text-stone-400">
                         <tr>
                             <th className="px-6 py-4">Nama</th>
                             <th className="px-6 py-4">Status</th>
                             <th className="px-6 py-4">Pax</th>
+                            <th className="px-6 py-4">Ucapan</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-50">
@@ -247,6 +233,7 @@ const App = () => {
                                 <td className="px-6 py-4 font-bold">{r.name}</td>
                                 <td className="px-6 py-4">{r.attendance}</td>
                                 <td className="px-6 py-4">{r.pax}</td>
+                                <td className="px-6 py-4 text-xs italic text-stone-500">{r.wish}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -257,7 +244,6 @@ const App = () => {
     );
   }
 
-  // --- UI LANDING (SEBELUM BUKA) ---
   if (!isOpen) {
     return (
       <div className="fixed inset-0 z-[200] bg-[#0d0d0d] flex items-center justify-center overflow-hidden font-jakarta text-white">
@@ -298,13 +284,12 @@ const App = () => {
     );
   }
 
-  // --- UI UTAMA (KAD JEMPUTAN) ---
   return (
     <div className="min-h-screen bg-[#faf9f6] text-[#2c2c2c] font-jakarta selection:bg-[#d4bdad] overflow-x-hidden scroll-smooth pb-20">
       
-      {/* Audio Player */}
+      {/* Audio Player - ID fail yang betul */}
       <audio ref={audioRef} loop preload="auto">
-        <source src="http://googleusercontent.com/file_content/4" type="audio/mpeg" />
+        <source src="uploaded:Janji Suci - Yovie & Nuno (KARAOKE PIANO - FEMALE KEY).mp3" type="audio/mpeg" />
       </audio>
 
       {/* Floating Music Button */}
@@ -337,6 +322,9 @@ const App = () => {
                     </div>
                 </div>
             </div>
+            <button onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })} className="mt-12 animate-bounce">
+              <ChevronDown className="w-6 h-6 text-stone-300" />
+            </button>
         </div>
       </section>
 
@@ -389,8 +377,8 @@ const App = () => {
                   </p>
               </div>
               <div className="flex justify-center gap-4 pt-4">
-                  <a href="https://www.google.com/maps/search/?api=1&query=Masjid+Jamek+Cina+Muslim+Klang" target="_blank" rel="noreferrer" className="px-6 py-3 bg-stone-900 text-white rounded-full text-[9px] font-bold uppercase tracking-widest">Maps</a>
-                  <a href="https://www.waze.com/ul?q=Masjid+Jamek+Cina+Muslim+Klang&navigate=yes" target="_blank" rel="noreferrer" className="px-6 py-3 border border-stone-100 rounded-full text-[9px] font-bold uppercase tracking-widest">Waze</a>
+                  <a href="https://www.google.com/maps/search/?api=1&query=Masjid+Jamek+Cina+Muslim+Klang" target="_blank" rel="noreferrer" className="px-6 py-3 bg-stone-900 text-white rounded-full text-[9px] font-bold uppercase tracking-widest flex items-center gap-2"><MapIcon className="w-3 h-3" /> Maps</a>
+                  <a href="https://www.waze.com/ul?q=Masjid+Jamek+Cina+Muslim+Klang&navigate=yes" target="_blank" rel="noreferrer" className="px-6 py-3 border border-stone-100 rounded-full text-[9px] font-bold uppercase tracking-widest flex items-center gap-2"><Navigation className="w-3 h-3" /> Waze</a>
               </div>
           </div>
       </section>
@@ -407,7 +395,7 @@ const App = () => {
                     <div className="text-center py-10">
                         <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-6 opacity-30" />
                         <h4 className="text-2xl font-display text-emerald-900">Terima Kasih</h4>
-                        <p className="text-stone-400 text-sm mt-2">Maklum balas telah diterima.</p>
+                        <p className="text-stone-400 text-sm mt-2">Maklum balas telah diterima dengan selamat.</p>
                         <button onClick={() => setSubmitted(false)} className="mt-10 text-[9px] font-black uppercase tracking-[0.4em] text-stone-300">Hantar Lagi?</button>
                     </div>
                 ) : (
@@ -454,6 +442,14 @@ const App = () => {
         .font-script { font-family: 'Alex Brush', cursive; }
         .font-display { font-family: 'Cinzel', serif; }
         .font-serif { font-family: 'Playfair Display', serif; }
+        .animate-bounce {
+          animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+          40% {transform: translateY(-10px);}
+          60% {transform: translateY(-5px);}
+        }
       `}</style>
     </div>
   );
