@@ -1,238 +1,460 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, onSnapshot } from 'firebase/firestore';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { Heart, Calendar, MapPin, Lock, Quote, CheckCircle2, VolumeX, Share2, ChevronDown, Sparkles, Map as MapIcon, MailOpen, Music, Copy, Send, UserCheck } from 'lucide-react';
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  onSnapshot,
+  query,
+  orderBy
+} from 'firebase/firestore';
+import { 
+  getAuth, 
+  signInAnonymously, 
+  onAuthStateChanged,
+  signInWithCustomToken
+} from 'firebase/auth';
+import { 
+  Heart, 
+  Calendar, 
+  MapPin, 
+  Clock, 
+  Lock,
+  Quote,
+  CheckCircle2,
+  Volume2,
+  VolumeX, 
+  Share2,
+  ChevronDown,
+  Sparkles,
+  Navigation,
+  Map as MapIcon,
+  Timer,
+  MailOpen,
+  ExternalLink,
+  Music,
+  UserCheck,
+  Users
+} from 'lucide-react';
 
-// --- MASUKKAN CONFIG FIREBASE ANDA DI SINI ---
-const firebaseConfig = {
+// --- KONFIGURASI FIREBASE ---
+const firebaseConfig = typeof __firebase_config !== 'undefined' 
+  ? JSON.parse(__firebase_config) 
+  : {
  apiKey: "AIzaSyAvo3MD7-kS7DJsgp0kfQdmRQyglsIzc2o",
   authDomain: "majlisnikahaizatlaila.firebaseapp.com",
   projectId: "majlisnikahaizatlaila",
   storageBucket: "majlisnikahaizatlaila.firebasestorage.app",
   messagingSenderId: "301347520690",
   appId: "1:301347520690:web:06e7d407f0a7632a8849ab",
-};
+    };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const appId = 'majlis-aizat-laila';
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'aizat-laila-wedding-v1';
 
 const App = () => {
   const [user, setUser] = useState(null);
+  const [view, setView] = useState('landing'); 
   const [isOpen, setIsOpen] = useState(false);
-  const [view, setView] = useState('landing');
   const [rsvpData, setRsvpData] = useState([]);
   const [form, setForm] = useState({ name: '', attendance: 'Hadir', pax: '1', wish: '' });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [shareGuestName, setShareGuestName] = useState('');
-  const [copySuccess, setCopySuccess] = useState(false);
+  
+  const [timeLeft, setTimeLeft] = useState({
+    hari: 0, jam: 0, minit: 0, saat: 0
+  });
+
   const [adminPin, setAdminPin] = useState('');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({ hari: 0, jam: 0, minit: 0, saat: 0 });
-  const [guestName, setGuestName] = useState('');
-
+  
   const audioRef = useRef(null);
-  const CORRECT_PIN = "0709";
+  const CORRECT_PIN = "1234"; 
+
+  const [guestName, setGuestName] = useState('');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const to = params.get('to');
     if (to) setGuestName(to);
+  }, []);
 
+  useEffect(() => {
     const targetDate = new Date('2026-06-06T09:00:00');
     const timer = setInterval(() => {
       const now = new Date();
-      const diff = targetDate - now;
-      if (diff > 0) {
+      const difference = targetDate - now;
+      if (difference > 0) {
         setTimeLeft({
-          hari: Math.floor(diff / (1000 * 60 * 60 * 24)),
-          jam: Math.floor((diff / (1000 * 60 * 60)) % 24),
-          minit: Math.floor((diff / 1000 / 60) % 60),
-          saat: Math.floor((diff / 1000) % 60)
+          hari: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          jam: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minit: Math.floor((difference / 1000 / 60) % 60),
+          saat: Math.floor((difference / 1000) % 60)
         });
+      } else {
+        clearInterval(timer);
       }
     }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
-      if (!u) signInAnonymously(auth);
-      setUser(u);
-    });
-
-    return () => {
-      clearInterval(timer);
-      unsubscribeAuth();
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (e) { console.error("Auth error:", e); }
     };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, setUser);
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
     if (!user || !isAdminAuthenticated) return;
-    const unsubRsvp = onSnapshot(collection(db, 'rsvp'), (s) => {
+    const rsvpCol = collection(db, 'artifacts', appId, 'public', 'data', 'rsvp');
+    const unsubRsvp = onSnapshot(rsvpCol, (s) => {
       setRsvpData(s.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
+    }, (e) => console.error("Firestore error:", e));
     return () => unsubRsvp();
   }, [user, isAdminAuthenticated]);
 
   const openInvitation = () => {
     setIsOpen(true);
+    setView('invitation');
     if (audioRef.current) {
       audioRef.current.play().catch(() => setIsPlaying(false));
       setIsPlaying(true);
     }
   };
 
+  const toggleMusic = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play().catch(e => console.log("Audio block:", e));
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
   const handleAdminLogin = (e) => {
     e.preventDefault();
     if (adminPin === CORRECT_PIN) {
-      setIsAdminAuthenticated(true);
-      setShowAdminLogin(false);
+        setIsAdminAuthenticated(true);
+        setView('admin');
+        setShowAdminLogin(false);
     } else {
-      setAdminPin('');
+        setAdminPin('');
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.name || !user) return;
     setLoading(true);
     try {
-      await addDoc(collection(db, 'rsvp'), { ...form, timestamp: Date.now() });
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'rsvp'), {
+        ...form,
+        pax: parseInt(form.pax),
+        timestamp: Date.now()
+      });
       setSubmitted(true);
-    } catch (err) { console.error(err); }
-    setLoading(false);
+    } catch (err) { 
+      console.error(err); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(window.location.origin);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 2000);
-  };
-
-  const shareWhatsApp = () => {
-    const url = `${window.location.origin}?to=${encodeURIComponent(shareGuestName)}`;
-    const msg = `Assalamualaikum, jemput ke majlis kami: ${url}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
-  };
+  const totalGuests = rsvpData
+    .filter(r => r.attendance === 'Hadir')
+    .reduce((s, c) => s + (Number(c.pax) || 0), 0);
 
   if (showAdminLogin) {
     return (
-      <div className="fixed inset-0 z-[300] bg-white flex items-center justify-center p-6">
-        <div className="w-full max-w-md text-center">
-          <Lock className="mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-6">Panel Pemilik</h2>
-          <form onSubmit={handleAdminLogin} className="space-y-4">
-            <input type="password" value={adminPin} onChange={(e) => setAdminPin(e.target.value)} className="w-full text-center text-3xl border-b py-2 outline-none" placeholder="****" maxLength={4} />
-            <button className="w-full bg-black text-white py-4 rounded-xl">MASUK</button>
-            <button type="button" onClick={() => setShowAdminLogin(false)} className="text-gray-400">Batal</button>
-          </form>
+        <div className="fixed inset-0 z-[300] bg-white flex items-center justify-center p-6 font-jakarta">
+            <div className="w-full max-w-md bg-white p-10 rounded-[2.5rem] shadow-2xl text-center border border-stone-100">
+                <Lock className="w-8 h-8 text-[#d4bdad] mx-auto mb-6" />
+                <h2 className="text-xl font-bold mb-2">Akses Pemilik</h2>
+                <p className="text-xs text-stone-400 mb-8 uppercase tracking-widest">Sila masukkan PIN</p>
+                <form onSubmit={handleAdminLogin} className="space-y-6">
+                    <input 
+                        type="password" 
+                        autoFocus
+                        value={adminPin} 
+                        onChange={(e) => setAdminPin(e.target.value)} 
+                        className="w-full text-center text-3xl tracking-[0.5em] py-4 border-b-2 border-stone-100 focus:border-stone-800 outline-none transition bg-transparent font-black" 
+                        placeholder="****" 
+                        maxLength={4} 
+                    />
+                    <button className="w-full bg-stone-900 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] shadow-xl">Sahkan PIN</button>
+                    <button type="button" onClick={() => setShowAdminLogin(false)} className="text-stone-400 text-[10px] uppercase font-bold tracking-widest pt-4 block mx-auto">Kembali</button>
+                </form>
+            </div>
         </div>
-      </div>
     );
   }
 
-  if (isAdminAuthenticated && !showAdminLogin) {
+  if (view === 'admin' && isAdminAuthenticated) {
     return (
-      <div className="p-6 max-w-4xl mx-auto space-y-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Dashboard Admin</h1>
-          <button onClick={() => setIsAdminAuthenticated(false)} className="bg-black text-white px-4 py-2 rounded">Keluar</button>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-          <h2 className="font-bold">Share Link Tetamu</h2>
-          <div className="flex gap-2">
-            <input placeholder="Nama Tetamu" value={shareGuestName} onChange={(e) => setShareGuestName(e.target.value)} className="flex-1 border p-3 rounded-xl" />
-            <button onClick={shareWhatsApp} className="bg-green-600 text-white px-6 rounded-xl">WhatsApp</button>
+      <div className="min-h-screen bg-[#fcfaf8] p-4 md:p-10 font-jakarta text-stone-800">
+          <div className="max-w-5xl mx-auto space-y-6">
+            <div className="flex justify-between items-center mb-10">
+                <div>
+                    <h1 className="text-2xl font-black uppercase tracking-tight">Senarai Tetamu</h1>
+                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">RSVP Real-time</p>
+                </div>
+                <button onClick={() => setView('invitation')} className="px-6 py-3 bg-stone-900 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em]">Kembali</button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-stone-100">
+                    <Users className="w-4 h-4 text-stone-300 mb-4" />
+                    <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest">Total Rekod</p>
+                    <p className="text-4xl font-black">{rsvpData.length}</p>
+                </div>
+                <div className="bg-[#1a1a1a] p-8 rounded-[2rem] shadow-2xl text-white col-span-1 md:col-span-2">
+                    <UserCheck className="w-4 h-4 text-[#d4bdad] mb-4" />
+                    <p className="text-stone-500 text-[10px] font-black uppercase tracking-widest">Total Tetamu Hadir</p>
+                    <p className="text-4xl font-black text-[#d4bdad]">{totalGuests} <span className="text-sm font-normal text-stone-500 ml-2">Orang</span></p>
+                </div>
+            </div>
+
+            <div className="bg-white rounded-[2.5rem] border border-stone-100 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left min-w-[700px]">
+                        <thead className="bg-stone-50 text-[9px] font-black uppercase tracking-[0.2em] text-stone-400">
+                            <tr>
+                                <th className="px-8 py-6">Nama</th>
+                                <th className="px-8 py-6 text-center">Status</th>
+                                <th className="px-8 py-6 text-center">Pax</th>
+                                <th className="px-8 py-6">Ucapan</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-stone-50">
+                            {rsvpData.map((r) => (
+                                <tr key={r.id} className="hover:bg-stone-50/50 transition-colors">
+                                    <td className="px-8 py-6 font-bold text-stone-800">{r.name}</td>
+                                    <td className="px-8 py-6 text-center">
+                                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${r.attendance === 'Hadir' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                            {r.attendance}
+                                        </span>
+                                    </td>
+                                    <td className="px-8 py-6 text-center font-medium">{r.pax}</td>
+                                    <td className="px-8 py-6 text-stone-500 italic text-sm">{r.wish || '-'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
           </div>
-        </div>
-        <div className="bg-white rounded-2xl border overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 text-xs">
-              <tr><th className="p-4">Nama</th><th className="p-4">Hadir?</th><th className="p-4">Pax</th></tr>
-            </thead>
-            <tbody>
-              {rsvpData.map(r => (
-                <tr key={r.id} className="border-t">
-                  <td className="p-4 font-bold">{r.name}</td>
-                  <td className="p-4">{r.attendance}</td>
-                  <td className="p-4">{r.pax}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
     );
   }
 
   if (!isOpen) {
     return (
-      <div className="fixed inset-0 bg-stone-900 text-white flex flex-col items-center justify-center text-center p-6">
-        <Heart className="text-stone-500 mb-8" />
-        <h1 className="text-4xl font-serif mb-4">Aizat & Laila</h1>
-        {guestName && <p className="mb-8 text-stone-400 italic">Kepada: {guestName}</p>}
-        <button onClick={openInvitation} className="bg-white text-black px-8 py-4 rounded-full font-bold tracking-widest uppercase text-xs">Buka Undangan</button>
+      <div className="fixed inset-0 z-[200] bg-[#0d0d0d] flex items-center justify-center overflow-hidden font-jakarta text-white">
+        <div className="absolute inset-0 opacity-40 pointer-events-none">
+          <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-[#b08d79] rounded-full blur-[150px] animate-pulse"></div>
+          <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-[#403028] rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '3s' }}></div>
+        </div>
+        
+        <div className="relative z-10 w-full max-w-4xl px-8 text-center flex flex-col items-center">
+            <div className="mb-10 flex flex-col items-center">
+               <Heart className="w-5 h-5 text-[#d4bdad] mb-12 opacity-50" />
+               <h1 className="text-3xl md:text-5xl font-serif tracking-tight font-light leading-snug animate-fade-in">
+                 Undangan Eksklusif <br/> <span className="text-[#d4bdad] italic">Majlis Akad Nikah</span>
+               </h1>
+
+               {guestName && (
+                 <div className="mt-12 mb-16">
+                    <p className="text-stone-500 text-[10px] uppercase tracking-[0.4em] font-bold mb-4">Istimewa Buat</p>
+                    <h2 className="text-3xl md:text-5xl font-serif tracking-wide font-light italic">{guestName}</h2>
+                 </div>
+               )}
+            </div>
+
+            <button 
+              onClick={openInvitation}
+              className="group relative flex items-center gap-6 px-12 py-6 bg-white text-stone-950 rounded-full font-bold text-[11px] uppercase tracking-[0.4em] transition-all hover:scale-105 shadow-2xl"
+            >
+              <MailOpen className="w-4 h-4" />
+              <span>Buka Undangan</span>
+            </button>
+
+            <button onClick={() => setShowAdminLogin(true)} className="mt-12 opacity-20 hover:opacity-50 transition-opacity">
+                <Lock className="w-4 h-4" />
+            </button>
+        </div>
+        <style>{`
+          @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+          .animate-fade-in { animation: fadeIn 1.5s ease-out forwards; }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f6] pb-20">
-      <audio ref={audioRef} loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" /></audio>
-      
-      <section className="h-screen flex flex-col items-center justify-center text-center p-6">
-        <Sparkles className="text-stone-300 mb-6" />
-        <h1 className="text-7xl font-serif text-stone-800 mb-4">Aizat & Laila</h1>
-        <p className="tracking-[0.5em] text-stone-400 text-xs uppercase">06 . 06 . 2026</p>
-        <ChevronDown className="mt-20 animate-bounce text-stone-200" />
-      </section>
+    <div className="min-h-screen bg-[#faf9f6] text-[#2c2c2c] font-jakarta selection:bg-[#d4bdad] overflow-x-hidden scroll-smooth pb-20">
+      <audio ref={audioRef} loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
+      </audio>
 
-      <section className="py-20 bg-white text-center border-y">
-        <div className="flex justify-center gap-8">
-          {Object.entries(timeLeft).map(([k, v]) => (
-            <div key={k}><p className="text-4xl text-stone-800">{v}</p><p className="text-[10px] uppercase text-stone-400">{k}</p></div>
-          ))}
+      <div className="fixed bottom-8 right-8 z-[100]">
+        <button 
+          onClick={toggleMusic} 
+          className={`p-5 rounded-full shadow-2xl border transition-all duration-700 ${isPlaying ? 'bg-white text-[#b08d79]' : 'bg-stone-900 text-white'}`}
+        >
+            {isPlaying ? <Music className="w-5 h-5 animate-spin" style={{ animationDuration: '5s' }} /> : <VolumeX className="w-5 h-5" />}
+        </button>
+      </div>
+
+      <section className="relative min-h-screen w-full flex items-center justify-center bg-[#fdfcfb]">
+        <div className="relative z-10 w-full max-w-4xl px-8 flex flex-col items-center">
+            <div className="relative w-full flex flex-col items-center">
+                <div className="absolute -inset-10 border-t border-x border-dashed border-stone-100 rounded-t-[18rem] opacity-60"></div>
+                <div className="relative z-10 w-full bg-white border border-stone-50 px-6 py-24 rounded-t-[18rem] rounded-b-[2rem] shadow-xl text-center">
+                    <Sparkles className="w-5 h-5 text-[#d4bdad] mx-auto mb-10 opacity-50" />
+                    <h1 className="text-6xl md:text-8xl font-script text-[#b08d79] mb-4">Aizat</h1>
+                    <div className="flex items-center justify-center gap-4 opacity-40 mb-4">
+                        <div className="h-px w-8 bg-stone-300"></div>
+                        <span className="text-xl font-serif italic text-stone-500">&</span>
+                        <div className="h-px w-8 bg-stone-300"></div>
+                    </div>
+                    <h1 className="text-6xl md:text-8xl font-script text-[#b08d79] mb-12">Laila</h1>
+                    <div className="pt-8 border-t border-stone-50">
+                       <p className="text-[12px] font-display uppercase tracking-[0.4em] text-stone-800 font-bold mb-2">Sabtu | 06.06.2026</p>
+                       <p className="text-[9px] uppercase tracking-[0.25em] text-stone-400 font-black">Klang, Selangor</p>
+                    </div>
+                </div>
+                <button onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })} className="mt-20 flex flex-col items-center gap-4 opacity-30 animate-bounce">
+                    <span className="text-[8px] uppercase tracking-[0.4em]">Sila Tatal</span>
+                    <ChevronDown className="w-4 h-4" />
+                </button>
+            </div>
         </div>
       </section>
 
-      <section className="py-20 px-6 max-w-xl mx-auto space-y-12">
-        <div className="bg-white p-10 rounded-3xl shadow-sm text-center border">
-          <Calendar className="mx-auto mb-4 text-stone-300" />
-          <h2 className="text-xl font-bold mb-2">SABTU, 06 JUN 2026</h2>
-          <p className="text-stone-500 italic">9:00 Pagi - 11:00 Pagi</p>
-        </div>
-        <div className="bg-white p-10 rounded-3xl shadow-sm text-center border">
-          <MapPin className="mx-auto mb-4 text-stone-300" />
-          <h2 className="text-xl font-bold mb-2">LOKASI</h2>
-          <p className="text-stone-500 mb-6 italic">Masjid Jamek Cina Muslim Klang, Selangor</p>
-          <a href="https://maps.google.com" target="_blank" className="bg-stone-900 text-white px-8 py-3 rounded-full text-xs uppercase font-bold">Google Maps</a>
+      <section className="py-24 px-8 text-center max-w-4xl mx-auto">
+        <Quote className="w-8 h-8 text-[#d4bdad] mx-auto mb-8 opacity-30" />
+        <p className="text-xl md:text-2xl font-serif italic text-stone-600 leading-relaxed">
+            "Ya Allah, pancarkanlah cahaya kasih-Mu ke dalam hati mereka, jadikanlah ikatan ini jambatan ke syurga, dan hiasilah rumah tangga mereka dengan bauan syurga yang penuh ketenangan."
+        </p>
+      </section>
+
+      <section className="py-20 px-8 bg-white border-y border-stone-50">
+        <div className="max-w-4xl mx-auto text-center">
+            <p className="text-[10px] uppercase tracking-[0.6em] text-stone-400 font-bold mb-10">Menghitung Hari</p>
+            <div className="flex justify-center items-center gap-4 md:gap-12">
+                {[
+                  { label: 'Hari', value: timeLeft.hari },
+                  { label: 'Jam', value: timeLeft.jam },
+                  { label: 'Minit', value: timeLeft.minit },
+                  { label: 'Saat', value: timeLeft.saat }
+                ].map((t, i) => (
+                    <div key={i} className="flex flex-col items-center min-w-[60px]">
+                        <span className="text-3xl md:text-5xl font-light text-[#b08d79] mb-2">{String(t.value).padStart(2, '0')}</span>
+                        <span className="text-[8px] uppercase tracking-widest text-stone-400 font-bold">{t.label}</span>
+                    </div>
+                ))}
+            </div>
         </div>
       </section>
 
-      <section className="py-20 px-6 max-w-xl mx-auto">
-        <div className="bg-stone-100 p-10 rounded-[3rem]">
-          <h2 className="text-center font-bold mb-10 tracking-widest">RSVP KEHADIRAN</h2>
-          {submitted ? (
-            <div className="text-center py-10"><CheckCircle2 className="mx-auto mb-4 text-green-500" /> <p>Terima Kasih!</p></div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <input required placeholder="Nama" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full bg-transparent border-b p-3 outline-none" />
-              <select value={form.attendance} onChange={e => setForm({...form, attendance: e.target.value})} className="w-full bg-transparent border-b p-3 outline-none">
-                <option value="Hadir">Hadir</option>
-                <option value="Tidak Hadir">Tidak Hadir</option>
-              </select>
-              <input type="number" placeholder="Bilangan Pax" value={form.pax} onChange={e => setForm({...form, pax: e.target.value})} className="w-full bg-transparent border-b p-3 outline-none" />
-              <button className="w-full bg-black text-white py-5 rounded-2xl text-xs uppercase font-bold tracking-widest">Hantar</button>
-            </form>
-          )}
+      <section className="py-32 px-8 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div className="bg-white p-12 rounded-[2.5rem] border border-stone-50 shadow-sm text-center space-y-8">
+              <Calendar className="w-6 h-6 text-[#b08d79] mx-auto" />
+              <h3 className="text-xl font-display uppercase tracking-widest">Akad Nikah</h3>
+              <div className="space-y-4">
+                  <p className="text-2xl font-serif">Sabtu, 06 Jun 2026</p>
+                  <p className="text-lg font-serif text-stone-400">9:00 Pagi</p>
+              </div>
+          </div>
+
+          <div className="bg-white p-12 rounded-[2.5rem] border border-stone-50 shadow-sm text-center space-y-8">
+              <MapPin className="w-6 h-6 text-[#b08d79] mx-auto" />
+              <h3 className="text-xl font-display uppercase tracking-widest">Lokasi</h3>
+              <div className="space-y-2">
+                  <p className="font-serif text-lg leading-relaxed">Masjid Jamek Cina Muslim Klang</p>
+                  <p className="text-xs text-stone-400 max-w-[250px] mx-auto leading-relaxed">Lot 157828, Jalan Langat, Taman Desawan Dua, 41200 Klang, Selangor</p>
+              </div>
+              <div className="flex justify-center gap-4 pt-4">
+                  <a href="https://www.google.com/maps/search/?api=1&query=Masjid+Jamek+Cina+Muslim+Klang" target="_blank" rel="noreferrer" className="px-6 py-3 bg-stone-900 text-white rounded-full text-[9px] font-bold uppercase tracking-widest">Maps</a>
+                  <a href="https://www.waze.com/ul?q=Masjid+Jamek+Cina+Muslim+Klang&navigate=yes" target="_blank" rel="noreferrer" className="px-6 py-3 border border-stone-100 rounded-full text-[9px] font-bold uppercase tracking-widest">Waze</a>
+              </div>
+          </div>
+      </section>
+
+      <section className="py-32 px-8 bg-white" id="rsvp">
+        <div className="max-w-3xl mx-auto bg-[#faf9f6] rounded-[2.5rem] border border-stone-50 overflow-hidden">
+            <div className="bg-white p-12 text-center border-b border-stone-50">
+                <h3 className="text-2xl font-display tracking-widest uppercase">RSVP</h3>
+                <p className="text-stone-400 text-[8px] uppercase font-black tracking-[0.3em] mt-2">Sahkan sebelum 25 Mei 2026</p>
+            </div>
+            <div className="p-10 md:p-16">
+                {submitted ? (
+                    <div className="text-center py-10">
+                        <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-6 opacity-30" />
+                        <h4 className="text-2xl font-display text-emerald-900">Terima Kasih</h4>
+                        <p className="text-stone-400 text-sm mt-2">Maklum balas telah diterima.</p>
+                        <button onClick={() => setSubmitted(false)} className="mt-10 text-[9px] font-black uppercase tracking-[0.4em] text-stone-300">Hantar Lagi?</button>
+                    </div>
+                ) : (
+                    <form onSubmit={handleSubmit} className="space-y-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                            <div className="space-y-2">
+                                <label className="text-[8px] font-black uppercase text-stone-300">Nama Penuh</label>
+                                <input required value={form.name} onChange={(e)=>setForm({...form, name: e.target.value})} className="w-full border-b border-stone-100 py-3 focus:border-[#b08d79] outline-none text-sm bg-transparent" placeholder="Nama anda" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[8px] font-black uppercase text-stone-300">Kehadiran</label>
+                                <select value={form.attendance} onChange={(e)=>setForm({...form, attendance: e.target.value})} className="w-full border-b border-stone-100 py-3 outline-none text-sm bg-transparent">
+                                    <option value="Hadir">Hadir</option>
+                                    <option value="Tidak Hadir">Tidak Hadir</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                            <div className="space-y-2">
+                                <label className="text-[8px] font-black uppercase text-stone-300">Bilangan Pax</label>
+                                <input type="number" min="1" max="10" value={form.pax} onChange={(e)=>setForm({...form, pax: e.target.value})} className="w-full border-b border-stone-100 py-3 outline-none text-sm bg-transparent" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[8px] font-black uppercase text-stone-300">Ucapan</label>
+                                <input value={form.wish} onChange={(e)=>setForm({...form, wish: e.target.value})} className="w-full border-b border-stone-100 py-3 outline-none text-sm bg-transparent" placeholder="Tulis ucapan..." />
+                            </div>
+                        </div>
+                        <button disabled={loading} className="w-full bg-[#1a1a1a] text-white py-5 rounded-xl font-black text-[10px] uppercase tracking-[0.4em] shadow-lg disabled:opacity-50">
+                            {loading ? 'Menghantar...' : 'Hantar RSVP'}
+                        </button>
+                    </form>
+                )}
+            </div>
         </div>
       </section>
 
-      <footer className="text-center py-20 opacity-20">
-        <button onClick={() => setShowAdminLogin(true)}><Lock className="w-4 h-4" /></button>
+      <footer className="py-24 text-center opacity-30">
+          <p className="text-[8px] uppercase tracking-[0.8em] font-black">#AIZATXLAILA</p>
       </footer>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cinzel:wght@400;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #faf9f6; }
+        .font-script { font-family: 'Alex Brush', cursive; }
+        .font-display { font-family: 'Cinzel', serif; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+      `}</style>
     </div>
   );
 };
