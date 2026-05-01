@@ -77,12 +77,14 @@ const App = () => {
 
   const [guestName, setGuestName] = useState('');
 
+  // Ambil nama tetamu daripada URL parameter (?to=Nama)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const to = params.get('to');
     if (to) setGuestName(to);
   }, []);
 
+  // Countdown Timer
   useEffect(() => {
     const targetDate = new Date('2026-06-06T09:00:00');
     const timer = setInterval(() => {
@@ -102,6 +104,7 @@ const App = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Auth Firebase
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -117,6 +120,7 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
+  // Ambil Data RSVP (Admin Sahaja)
   useEffect(() => {
     if (!user || !isAdminAuthenticated) return;
     const rsvpCol = collection(db, 'artifacts', appId, 'public', 'data', 'rsvp');
@@ -129,9 +133,14 @@ const App = () => {
   const openInvitation = () => {
     setIsOpen(true);
     setView('invitation');
+    // Main audio sebaik sahaja dibuka
     if (audioRef.current) {
-      audioRef.current.play().catch(() => setIsPlaying(false));
-      setIsPlaying(true);
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch((e) => {
+        console.log("Audio playback failed:", e);
+        setIsPlaying(false);
+      });
     }
   };
 
@@ -179,13 +188,13 @@ const App = () => {
     .filter(r => r.attendance === 'Hadir')
     .reduce((s, c) => s + (Number(c.pax) || 0), 0);
 
+  // --- UI ADMIN LOGIN ---
   if (showAdminLogin) {
     return (
         <div className="fixed inset-0 z-[300] bg-white flex items-center justify-center p-6 font-jakarta">
             <div className="w-full max-w-md bg-white p-10 rounded-[2.5rem] shadow-2xl text-center border border-stone-100">
                 <Lock className="w-8 h-8 text-[#d4bdad] mx-auto mb-6" />
                 <h2 className="text-xl font-bold mb-2">Akses Pemilik</h2>
-                <p className="text-xs text-stone-400 mb-8 uppercase tracking-widest">Sila masukkan PIN</p>
                 <form onSubmit={handleAdminLogin} className="space-y-6">
                     <input 
                         type="password" 
@@ -204,64 +213,51 @@ const App = () => {
     );
   }
 
+  // --- UI ADMIN PANEL ---
   if (view === 'admin' && isAdminAuthenticated) {
     return (
       <div className="min-h-screen bg-[#fcfaf8] p-4 md:p-10 font-jakarta text-stone-800">
           <div className="max-w-5xl mx-auto space-y-6">
             <div className="flex justify-between items-center mb-10">
-                <div>
-                    <h1 className="text-2xl font-black uppercase tracking-tight">Senarai Tetamu</h1>
-                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">RSVP Real-time</p>
-                </div>
+                <h1 className="text-2xl font-black uppercase tracking-tight">Senarai Tetamu</h1>
                 <button onClick={() => setView('invitation')} className="px-6 py-3 bg-stone-900 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em]">Kembali</button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-stone-100">
-                    <Users className="w-4 h-4 text-stone-300 mb-4" />
-                    <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest">Total Rekod</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-stone-100 text-center">
+                    <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest">Total Hadir</p>
+                    <p className="text-4xl font-black">{totalGuests} Orang</p>
+                </div>
+                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-stone-100 text-center">
+                    <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest">Total RSVP</p>
                     <p className="text-4xl font-black">{rsvpData.length}</p>
                 </div>
-                <div className="bg-[#1a1a1a] p-8 rounded-[2rem] shadow-2xl text-white col-span-1 md:col-span-2">
-                    <UserCheck className="w-4 h-4 text-[#d4bdad] mb-4" />
-                    <p className="text-stone-500 text-[10px] font-black uppercase tracking-widest">Total Tetamu Hadir</p>
-                    <p className="text-4xl font-black text-[#d4bdad]">{totalGuests} <span className="text-sm font-normal text-stone-500 ml-2">Orang</span></p>
-                </div>
             </div>
-
-            <div className="bg-white rounded-[2.5rem] border border-stone-100 overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left min-w-[700px]">
-                        <thead className="bg-stone-50 text-[9px] font-black uppercase tracking-[0.2em] text-stone-400">
-                            <tr>
-                                <th className="px-8 py-6">Nama</th>
-                                <th className="px-8 py-6 text-center">Status</th>
-                                <th className="px-8 py-6 text-center">Pax</th>
-                                <th className="px-8 py-6">Ucapan</th>
+            <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-stone-100">
+                <table className="w-full text-left">
+                    <thead className="bg-stone-50 text-[10px] uppercase font-bold text-stone-400">
+                        <tr>
+                            <th className="px-6 py-4">Nama</th>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4">Pax</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-50">
+                        {rsvpData.map(r => (
+                            <tr key={r.id}>
+                                <td className="px-6 py-4 font-bold">{r.name}</td>
+                                <td className="px-6 py-4">{r.attendance}</td>
+                                <td className="px-6 py-4">{r.pax}</td>
                             </tr>
-                        </thead>
-                        <tbody className="divide-y divide-stone-50">
-                            {rsvpData.map((r) => (
-                                <tr key={r.id} className="hover:bg-stone-50/50 transition-colors">
-                                    <td className="px-8 py-6 font-bold text-stone-800">{r.name}</td>
-                                    <td className="px-8 py-6 text-center">
-                                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${r.attendance === 'Hadir' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                                            {r.attendance}
-                                        </span>
-                                    </td>
-                                    <td className="px-8 py-6 text-center font-medium">{r.pax}</td>
-                                    <td className="px-8 py-6 text-stone-500 italic text-sm">{r.wish || '-'}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                        ))}
+                    </tbody>
+                </table>
             </div>
           </div>
       </div>
     );
   }
 
+  // --- UI LANDING (SEBELUM BUKA) ---
   if (!isOpen) {
     return (
       <div className="fixed inset-0 z-[200] bg-[#0d0d0d] flex items-center justify-center overflow-hidden font-jakarta text-white">
@@ -276,7 +272,6 @@ const App = () => {
                <h1 className="text-3xl md:text-5xl font-serif tracking-tight font-light leading-snug animate-fade-in">
                  Undangan Eksklusif <br/> <span className="text-[#d4bdad] italic">Majlis Akad Nikah</span>
                </h1>
-
                {guestName && (
                  <div className="mt-12 mb-16">
                     <p className="text-stone-500 text-[10px] uppercase tracking-[0.4em] font-bold mb-4">Istimewa Buat</p>
@@ -284,7 +279,6 @@ const App = () => {
                  </div>
                )}
             </div>
-
             <button 
               onClick={openInvitation}
               className="group relative flex items-center gap-6 px-12 py-6 bg-white text-stone-950 rounded-full font-bold text-[11px] uppercase tracking-[0.4em] transition-all hover:scale-105 shadow-2xl"
@@ -292,7 +286,6 @@ const App = () => {
               <MailOpen className="w-4 h-4" />
               <span>Buka Undangan</span>
             </button>
-
             <button onClick={() => setShowAdminLogin(true)} className="mt-12 opacity-20 hover:opacity-50 transition-opacity">
                 <Lock className="w-4 h-4" />
             </button>
@@ -305,12 +298,16 @@ const App = () => {
     );
   }
 
+  // --- UI UTAMA (KAD JEMPUTAN) ---
   return (
     <div className="min-h-screen bg-[#faf9f6] text-[#2c2c2c] font-jakarta selection:bg-[#d4bdad] overflow-x-hidden scroll-smooth pb-20">
-      <audio ref={audioRef} loop>
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
+      
+      {/* Audio Player */}
+      <audio ref={audioRef} loop preload="auto">
+        <source src="http://googleusercontent.com/file_content/4" type="audio/mpeg" />
       </audio>
 
+      {/* Floating Music Button */}
       <div className="fixed bottom-8 right-8 z-[100]">
         <button 
           onClick={toggleMusic} 
@@ -320,6 +317,7 @@ const App = () => {
         </button>
       </div>
 
+      {/* Hero Section */}
       <section className="relative min-h-screen w-full flex items-center justify-center bg-[#fdfcfb]">
         <div className="relative z-10 w-full max-w-4xl px-8 flex flex-col items-center">
             <div className="relative w-full flex flex-col items-center">
@@ -338,14 +336,11 @@ const App = () => {
                        <p className="text-[9px] uppercase tracking-[0.25em] text-stone-400 font-black">Klang, Selangor</p>
                     </div>
                 </div>
-                <button onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })} className="mt-20 flex flex-col items-center gap-4 opacity-30 animate-bounce">
-                    <span className="text-[8px] uppercase tracking-[0.4em]">Sila Tatal</span>
-                    <ChevronDown className="w-4 h-4" />
-                </button>
             </div>
         </div>
       </section>
 
+      {/* Quote Section */}
       <section className="py-24 px-8 text-center max-w-4xl mx-auto">
         <Quote className="w-8 h-8 text-[#d4bdad] mx-auto mb-8 opacity-30" />
         <p className="text-xl md:text-2xl font-serif italic text-stone-600 leading-relaxed">
@@ -353,6 +348,7 @@ const App = () => {
         </p>
       </section>
 
+      {/* Countdown Section */}
       <section className="py-20 px-8 bg-white border-y border-stone-50">
         <div className="max-w-4xl mx-auto text-center">
             <p className="text-[10px] uppercase tracking-[0.6em] text-stone-400 font-bold mb-10">Menghitung Hari</p>
@@ -372,6 +368,7 @@ const App = () => {
         </div>
       </section>
 
+      {/* Details Section */}
       <section className="py-32 px-8 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
           <div className="bg-white p-12 rounded-[2.5rem] border border-stone-50 shadow-sm text-center space-y-8">
               <Calendar className="w-6 h-6 text-[#b08d79] mx-auto" />
@@ -387,7 +384,9 @@ const App = () => {
               <h3 className="text-xl font-display uppercase tracking-widest">Lokasi</h3>
               <div className="space-y-2">
                   <p className="font-serif text-lg leading-relaxed">Masjid Jamek Cina Muslim Klang</p>
-                  <p className="text-xs text-stone-400 max-w-[250px] mx-auto leading-relaxed">Lot 157828, Jalan Langat, Taman Desawan Dua, 41200 Klang, Selangor</p>
+                  <p className="text-xs text-stone-400 max-w-[250px] mx-auto leading-relaxed">
+                    Lot 157828, Jalan Langat, Taman Desawan Dua, 41200 Klang, Selangor
+                  </p>
               </div>
               <div className="flex justify-center gap-4 pt-4">
                   <a href="https://www.google.com/maps/search/?api=1&query=Masjid+Jamek+Cina+Muslim+Klang" target="_blank" rel="noreferrer" className="px-6 py-3 bg-stone-900 text-white rounded-full text-[9px] font-bold uppercase tracking-widest">Maps</a>
@@ -396,6 +395,7 @@ const App = () => {
           </div>
       </section>
 
+      {/* RSVP Section */}
       <section className="py-32 px-8 bg-white" id="rsvp">
         <div className="max-w-3xl mx-auto bg-[#faf9f6] rounded-[2.5rem] border border-stone-50 overflow-hidden">
             <div className="bg-white p-12 text-center border-b border-stone-50">
