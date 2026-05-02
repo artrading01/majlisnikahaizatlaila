@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getFirestore, 
   collection, 
   addDoc, 
-  onSnapshot,
-  query
+  onSnapshot
 } from 'firebase/firestore';
 import { 
   getAuth, 
@@ -29,18 +28,26 @@ import {
 } from 'lucide-react';
 
 // --- KONFIGURASI FIREBASE ---
- apiKey: "AIzaSyAvo3MD7-kS7DJsgp0kfQdmRQyglsIzc2o",
-  authDomain: "majlisnikahaizatlaila.firebaseapp.com",
-  projectId: "majlisnikahaizatlaila",
-  storageBucket: "majlisnikahaizatlaila.firebasestorage.app",
-  messagingSenderId: "301347520690",
-  appId: "1:301347520690:web:06e7d407f0a7632a8849ab",
-   
-const firebaseConfig = JSON.parse(__firebase_config);
-const app = initializeApp(firebaseConfig);
+// Di Vercel/Local,   return {
+    apiKey: "AIzaSyAvo3MD7-kS7DJsgp0kfQdmRQyglsIzc2o",
+    authDomain: "majlisnikahaizatlaila.firebaseapp.com",
+    projectId: "majlisnikahaizatlaila",
+    storageBucket: "majlisnikahaizatlaila.firebasestorage.app",
+    messagingSenderId: "301347520690",
+    appId: "1:301347520690:web:06e7d407f0a7632a8849ab"
+  };
+};
+
+const getFirebaseConfig = () => {
+  if (typeof __firebase_config !== 'undefined') {
+    return JSON.parse(__firebase_config);
+  }
+
+const firebaseConfig = getFirebaseConfig();
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'majlis-aizat-laila';
 
 const COLLECTION_NAME = "rsvp_responses"; 
 
@@ -88,7 +95,6 @@ const App = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // RULE 3: Auth Before Queries
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -106,17 +112,14 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
-  // Fetch data for Admin (Hanya jalan jika user dah auth & admin dah login)
   useEffect(() => {
     if (!user || !isAdminAuthenticated) return;
 
-    // RULE 1: Strict Pathing
     const rsvpCol = collection(db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME);
     
     const unsubRsvp = onSnapshot(rsvpCol, 
       (s) => {
         const data = s.docs.map(d => ({ id: d.id, ...d.data() }));
-        // RULE 2: Filter/Sort in Memory
         setRsvpData(data.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)));
       }, 
       (e) => console.error("Firestore Read Error:", e)
@@ -158,12 +161,10 @@ const App = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Guard against unauthenticated users (RULE 3)
     if (!form.name || !user) return;
     
     setLoading(true);
     try {
-      // RULE 1: Strict Pathing
       const rsvpCol = collection(db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME);
       await addDoc(rsvpCol, {
         ...form,
@@ -190,8 +191,14 @@ const App = () => {
                 <button onClick={() => setView('invitation')} className="px-6 py-3 bg-stone-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest">Kembali</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-8 rounded-[2rem] border shadow-sm"><p className="text-[10px] font-bold text-stone-400 mb-2 tracking-widest">JUMLAH REKOD</p><p className="text-4xl font-black">{rsvpData.length}</p></div>
-                <div className="bg-stone-900 p-8 rounded-[2rem] text-white shadow-xl"><p className="text-[10px] font-bold text-stone-500 mb-2 tracking-widest">JUMLAH PAX HADIR</p><p className="text-4xl font-black text-[#d4bdad]">{totalGuests}</p></div>
+                <div className="bg-white p-8 rounded-[2rem] border shadow-sm">
+                  <p className="text-[10px] font-bold text-stone-400 mb-2 tracking-widest uppercase">Jumlah Rekod</p>
+                  <p className="text-4xl font-black">{rsvpData.length}</p>
+                </div>
+                <div className="bg-stone-900 p-8 rounded-[2rem] text-white shadow-xl">
+                  <p className="text-[10px] font-bold text-stone-500 mb-2 tracking-widest uppercase">Jumlah Pax Hadir</p>
+                  <p className="text-4xl font-black text-[#d4bdad]">{totalGuests}</p>
+                </div>
             </div>
             <div className="bg-white rounded-[2rem] border overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
@@ -275,7 +282,7 @@ const App = () => {
         </button>
       </div>
 
-      {/* Hero Section */}
+      {/* Hero Section with Arch */}
       <section className="relative min-h-screen flex items-center justify-center text-center p-8 overflow-hidden">
         <div className="absolute inset-x-8 top-16 bottom-16 border-[1px] border-[#d4bdad]/30 rounded-t-[500px] pointer-events-none z-0"></div>
         <div className="absolute inset-x-12 top-20 bottom-20 border-[1px] border-[#d4bdad]/10 rounded-t-[500px] pointer-events-none z-0"></div>
@@ -299,7 +306,7 @@ const App = () => {
         </div>
       </section>
 
-      {/* Quote */}
+      {/* Konten lain... */}
       <section className="py-40 px-8 max-w-4xl mx-auto text-center">
         <Quote className="w-6 h-6 text-[#d4bdad] mx-auto mb-10 opacity-30" />
         <p className="text-xl md:text-2xl font-serif italic text-stone-600 leading-relaxed font-light">
@@ -328,7 +335,7 @@ const App = () => {
         </div>
       </section>
 
-      {/* Butiran Majlis */}
+      {/* Lokasi */}
       <section className="py-40 px-8">
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="bg-white p-16 rounded-[3rem] border border-stone-50 shadow-sm flex flex-col items-center text-center space-y-8 hover:shadow-xl transition-all group">
@@ -353,13 +360,12 @@ const App = () => {
                     <a href="https://www.google.com/maps/search/?api=1&query=Masjid+Jamek+Cina+Muslim+Klang" target="_blank" rel="noreferrer" className="px-6 py-3 bg-stone-900 text-white rounded-full text-[9px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-colors">
                         <Navigation className="w-3 h-3" /> Maps
                     </a>
-                    <a href="https://www.waze.com/ul?q=Masjid+Jamek+Cina+Muslim+Klang" target="_blank" rel="noreferrer" className="px-6 py-3 border border-stone-100 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-stone-50 transition-colors">Waze</a>
                 </div>
             </div>
         </div>
       </section>
 
-      {/* RSVP Section */}
+      {/* RSVP */}
       <section className="py-40 px-8 bg-white" id="rsvp">
         <div className="max-w-2xl mx-auto bg-[#faf9f6] rounded-[3rem] p-10 md:p-20 shadow-inner border border-stone-50">
             <div className="text-center mb-16">
@@ -374,7 +380,6 @@ const App = () => {
                     </div>
                     <p className="text-xl font-serif italic text-emerald-900 mb-2">Terima Kasih!</p>
                     <p className="text-stone-500 text-sm">Maklum balas anda telah kami terima.</p>
-                    <button onClick={() => setSubmitted(false)} className="mt-8 text-[9px] uppercase font-bold tracking-widest text-stone-400 hover:text-stone-900">Hantar RSVP Lain</button>
                 </div>
             ) : (
                 <form onSubmit={handleSubmit} className="space-y-10">
@@ -410,7 +415,6 @@ const App = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="py-32 text-center">
          <p className="text-[9px] uppercase tracking-[1em] font-black text-stone-300 mb-10">#AIZATXLAILA</p>
          <button onClick={() => setShowAdminLogin(true)} className="text-[8px] uppercase tracking-widest text-stone-200 hover:text-stone-800 transition-colors font-bold flex items-center gap-2 mx-auto">
@@ -421,11 +425,7 @@ const App = () => {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@200;400;700;800&display=swap');
         
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            scroll-behavior: smooth;
-        }
-        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; }
         .font-script { font-family: 'Alex Brush', cursive; }
         .font-serif { font-family: 'Playfair Display', serif; }
         .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
