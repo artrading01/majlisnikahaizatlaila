@@ -29,6 +29,13 @@ import {
 } from 'lucide-react';
 
 // --- KONFIGURASI FIREBASE ---
+ apiKey: "AIzaSyAvo3MD7-kS7DJsgp0kfQdmRQyglsIzc2o",
+  authDomain: "majlisnikahaizatlaila.firebaseapp.com",
+  projectId: "majlisnikahaizatlaila",
+  storageBucket: "majlisnikahaizatlaila.firebasestorage.app",
+  messagingSenderId: "301347520690",
+  appId: "1:301347520690:web:06e7d407f0a7632a8849ab",
+   
 const firebaseConfig = JSON.parse(__firebase_config);
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
