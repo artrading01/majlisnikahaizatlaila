@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getFirestore, 
   collection, 
   addDoc, 
-  onSnapshot,
-  query,
-  limit
+  onSnapshot
 } from 'firebase/firestore';
 import { 
   getAuth, 
@@ -19,13 +17,10 @@ import {
   Calendar, 
   MapPin, 
   Lock,
-  Quote,
   CheckCircle2,
-  VolumeX, 
   ChevronDown, 
   Sparkles,
   MailOpen,
-  Music,
   Navigation
 } from 'lucide-react';
 
@@ -35,12 +30,12 @@ const getFirebaseConfig = () => {
     return JSON.parse(__firebase_config);
   }
   return {
- apiKey: "AIzaSyAvo3MD7-kS7DJsgp0kfQdmRQyglsIzc2o",
-  authDomain: "majlisnikahaizatlaila.firebaseapp.com",
-  projectId: "majlisnikahaizatlaila",
-  storageBucket: "majlisnikahaizatlaila.firebasestorage.app",
-  messagingSenderId: "301347520690",
-  appId: "1:301347520690:web:06e7d407f0a7632a8849ab",
+    apiKey: "AIzaSyAvo3MD7-kS7DJsgp0kfQdmRQyglsIzc2o",
+    authDomain: "majlisnikahaizatlaila.firebaseapp.com",
+    projectId: "majlisnikahaizatlaila",
+    storageBucket: "majlisnikahaizatlaila.firebasestorage.app",
+    messagingSenderId: "301347520690",
+    appId: "1:301347520690:web:06e7d407f0a7632a8849ab",
   };
 };
 
@@ -49,7 +44,6 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ID unik untuk memisahkan data dalam Firestore
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'majlis-aizat-laila';
 const COLLECTION_NAME = "rsvp_responses"; 
 
@@ -61,7 +55,6 @@ const App = () => {
   const [form, setForm] = useState({ name: '', attendance: 'Hadir', pax: '1', wish: '' });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   
   const [timeLeft, setTimeLeft] = useState({ hari: 0, jam: 0, minit: 0, saat: 0 });
   const [adminPin, setAdminPin] = useState('');
@@ -69,7 +62,6 @@ const App = () => {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   
-  const audioRef = useRef(null);
   const CORRECT_PIN = "1234"; 
   const [guestName, setGuestName] = useState('');
 
@@ -100,7 +92,7 @@ const App = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // 3. Firebase Auth (Wajib untuk Firestore)
+  // 3. Firebase Auth
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -120,18 +112,13 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
-  // 4. Fetch RSVP Data (Real-time)
+  // 4. Fetch RSVP Data untuk Admin
   useEffect(() => {
-    // Hanya fetch jika user login dan dalam mode admin
     if (!user || !isAdminAuthenticated) return;
-
-    // RULE: Gunakan path yang konsisten
     const rsvpCol = collection(db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME);
-    
     const unsubRsvp = onSnapshot(rsvpCol, 
       (s) => {
         const data = s.docs.map(d => ({ id: d.id, ...d.data() }));
-        // Susun mengikut masa (terbaru di atas)
         setRsvpData(data.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)));
       }, 
       (e) => {
@@ -139,15 +126,13 @@ const App = () => {
         setErrorMessage("Ralat membaca data. Sila semak Firestore Rules.");
       }
     );
-    
     return () => unsubRsvp();
   }, [user, isAdminAuthenticated]);
 
   const openInvitation = () => {
     setIsOpen(true);
     setView('invitation');
-    if (audioRef.current) {
-  
+  };
 
   const handleAdminLogin = (e) => {
     e.preventDefault();
@@ -162,11 +147,7 @@ const App = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name) return;
-    if (!user) {
-        setErrorMessage("Sistem sedang bersedia. Sila tunggu sebentar.");
-        return;
-    }
+    if (!form.name || !user) return;
     
     setLoading(true);
     setErrorMessage('');
@@ -181,7 +162,7 @@ const App = () => {
       setSubmitted(true);
     } catch (err) { 
         console.error("Submission Error:", err);
-        setErrorMessage("Gagal menghantar RSVP. Pastikan Firestore Cloud aktif.");
+        setErrorMessage("Gagal menghantar RSVP. Sila cuba lagi.");
     } finally { 
         setLoading(false); 
     }
@@ -189,16 +170,14 @@ const App = () => {
 
   const totalGuests = rsvpData.filter(r => r.attendance === 'Hadir').reduce((s, c) => s + (Number(c.pax) || 0), 0);
 
-  // VIEW: Admin Panel
   if (view === 'admin' && isAdminAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#fcfaf8] p-4 md:p-10 font-jakarta text-stone-800">
+      <div className="min-h-screen bg-[#fcfaf8] p-4 md:p-10 text-stone-800">
           <div className="max-w-5xl mx-auto space-y-6">
             <div className="flex justify-between items-center mb-10">
                 <h1 className="text-2xl font-black uppercase tracking-tight">Senarai Tetamu</h1>
                 <button onClick={() => setView('invitation')} className="px-6 py-3 bg-stone-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest">Kembali</button>
             </div>
-            {errorMessage && <div className="bg-red-50 text-red-500 p-4 rounded-xl text-xs font-bold mb-4">{errorMessage}</div>}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white p-8 rounded-[2rem] border shadow-sm">
                   <p className="text-[10px] font-bold text-stone-400 mb-2 tracking-widest uppercase">Jumlah Rekod</p>
@@ -217,7 +196,7 @@ const App = () => {
                         </thead>
                         <tbody className="divide-y divide-stone-100">
                             {rsvpData.length === 0 ? (
-                                <tr><td colSpan="4" className="p-10 text-center text-stone-400 italic">Tiada data RSVP ditemui dalam pangkalan data.</td></tr>
+                                <tr><td colSpan="4" className="p-10 text-center text-stone-400 italic">Tiada data RSVP ditemui.</td></tr>
                             ) : (
                                 rsvpData.map(r => (
                                     <tr key={r.id} className="hover:bg-stone-50 transition-colors">
@@ -239,7 +218,6 @@ const App = () => {
     );
   }
 
-  // VIEW: Admin Login
   if (showAdminLogin) {
     return (
         <div className="fixed inset-0 z-[300] bg-white flex items-center justify-center p-6">
@@ -248,15 +226,14 @@ const App = () => {
                 <h2 className="text-xl font-bold mb-8 uppercase tracking-widest">Akses Pemilik</h2>
                 <form onSubmit={handleAdminLogin} className="space-y-6">
                     <input type="password" value={adminPin} onChange={(e) => setAdminPin(e.target.value)} className="w-full text-center text-3xl py-4 border-b-2 outline-none focus:border-[#d4bdad] transition-colors" placeholder="****" maxLength={4} />
-                    <button className="w-full bg-stone-900 text-white py-5 rounded-2xl font-bold uppercase tracking-widest hover:bg-black transition-all">Sahkan PIN</button>
-                    <button type="button" onClick={() => setShowAdminLogin(false)} className="text-stone-400 text-[10px] uppercase font-bold mt-4 block mx-auto tracking-widest">Batal</button>
+                    <button className="w-full bg-stone-900 text-white py-5 rounded-2xl font-bold uppercase tracking-widest">Sahkan PIN</button>
+                    <button type="button" onClick={() => setShowAdminLogin(false)} className="text-stone-400 text-[10px] uppercase font-bold mt-4 block mx-auto">Batal</button>
                 </form>
             </div>
         </div>
     );
   }
 
-  // VIEW: Landing Page
   if (!isOpen) {
     return (
       <div className="fixed inset-0 z-[200] bg-[#0d0d0d] flex items-center justify-center text-white text-center p-8">
@@ -281,19 +258,10 @@ const App = () => {
     );
   }
 
-  // MAIN VIEW
   return (
     <div className="min-h-screen bg-[#faf9f6] text-[#2c2c2c] selection:bg-[#d4bdad] animate-fade-in">
-      <audio ref={audioRef} loop preload="auto">
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
-      </audio>
-
-      <div className="fixed bottom-8 right-8 z-[100]">
-        <button onClick={toggleMusic} className="p-4 bg-white rounded-full shadow-2xl border transition-all active:scale-90">
-            {isPlaying ? <Music className="w-5 h-5 animate-pulse text-[#b08d79]" /> : <VolumeX className="w-5 h-5 text-stone-400" />}
-        </button>
-      </div>
-
+      
+      {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center text-center p-8 overflow-hidden">
         <div className="absolute inset-x-8 top-16 bottom-16 border-[1px] border-[#d4bdad]/30 rounded-t-[500px] pointer-events-none z-0"></div>
         <div className="z-10 flex flex-col items-center">
