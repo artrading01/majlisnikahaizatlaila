@@ -20,7 +20,7 @@ import {
   Quote,
   CheckCircle2,
   VolumeX, 
-  ChevronDown,
+  ChevronDown, 
   Sparkles,
   MailOpen,
   Music,
@@ -28,7 +28,12 @@ import {
 } from 'lucide-react';
 
 // --- KONFIGURASI FIREBASE ---
-// Di Vercel/Local,   return {
+const getFirebaseConfig = () => {
+  if (typeof __firebase_config !== 'undefined') {
+    return JSON.parse(__firebase_config);
+  }
+  // Konfigurasi manual anda untuk Vercel/Local
+  return {
     apiKey: "AIzaSyAvo3MD7-kS7DJsgp0kfQdmRQyglsIzc2o",
     authDomain: "majlisnikahaizatlaila.firebaseapp.com",
     projectId: "majlisnikahaizatlaila",
@@ -37,11 +42,6 @@ import {
     appId: "1:301347520690:web:06e7d407f0a7632a8849ab"
   };
 };
-
-const getFirebaseConfig = () => {
-  if (typeof __firebase_config !== 'undefined') {
-    return JSON.parse(__firebase_config);
-  }
 
 const firebaseConfig = getFirebaseConfig();
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -70,12 +70,14 @@ const App = () => {
   const CORRECT_PIN = "1234"; 
   const [guestName, setGuestName] = useState('');
 
+  // Ambil nama dari URL (?to=Nama)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const to = params.get('to');
     if (to) setGuestName(to);
   }, []);
 
+  // Countdown Logic
   useEffect(() => {
     const targetDate = new Date('2026-06-06T09:00:00');
     const timer = setInterval(() => {
@@ -95,6 +97,7 @@ const App = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Firebase Auth
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -112,6 +115,7 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
+  // Fetch RSVP Data (Admin Only)
   useEffect(() => {
     if (!user || !isAdminAuthenticated) return;
 
@@ -132,7 +136,7 @@ const App = () => {
     setIsOpen(true);
     setView('invitation');
     if (audioRef.current) {
-      audioRef.current.play().catch(e => console.log("Autoplay blocked"));
+      audioRef.current.play().catch(e => console.log("Audio play blocked"));
       setIsPlaying(true);
     }
   };
@@ -182,6 +186,7 @@ const App = () => {
 
   const totalGuests = rsvpData.filter(r => r.attendance === 'Hadir').reduce((s, c) => s + (Number(c.pax) || 0), 0);
 
+  // VIEW: Admin Panel
   if (view === 'admin' && isAdminAuthenticated) {
     return (
       <div className="min-h-screen bg-[#fcfaf8] p-4 md:p-10 font-jakarta text-stone-800">
@@ -230,6 +235,7 @@ const App = () => {
     );
   }
 
+  // VIEW: Admin Login
   if (showAdminLogin) {
     return (
         <div className="fixed inset-0 z-[300] bg-white flex items-center justify-center p-6">
@@ -246,6 +252,7 @@ const App = () => {
     );
   }
 
+  // VIEW: Landing Page
   if (!isOpen) {
     return (
       <div className="fixed inset-0 z-[200] bg-[#0d0d0d] flex items-center justify-center text-white text-center p-8">
@@ -270,6 +277,7 @@ const App = () => {
     );
   }
 
+  // MAIN VIEW: Invitation Page
   return (
     <div className="min-h-screen bg-[#faf9f6] text-[#2c2c2c] selection:bg-[#d4bdad] animate-fade-in">
       <audio ref={audioRef} loop preload="auto">
@@ -282,8 +290,9 @@ const App = () => {
         </button>
       </div>
 
-      {/* Hero Section with Arch */}
+      {/* Hero Section with Modern Arch */}
       <section className="relative min-h-screen flex items-center justify-center text-center p-8 overflow-hidden">
+        {/* Visual Arch Elements */}
         <div className="absolute inset-x-8 top-16 bottom-16 border-[1px] border-[#d4bdad]/30 rounded-t-[500px] pointer-events-none z-0"></div>
         <div className="absolute inset-x-12 top-20 bottom-20 border-[1px] border-[#d4bdad]/10 rounded-t-[500px] pointer-events-none z-0"></div>
 
@@ -306,7 +315,7 @@ const App = () => {
         </div>
       </section>
 
-      {/* Konten lain... */}
+      {/* Heart Quote */}
       <section className="py-40 px-8 max-w-4xl mx-auto text-center">
         <Quote className="w-6 h-6 text-[#d4bdad] mx-auto mb-10 opacity-30" />
         <p className="text-xl md:text-2xl font-serif italic text-stone-600 leading-relaxed font-light">
@@ -315,7 +324,7 @@ const App = () => {
         <div className="mt-12 h-px w-20 bg-stone-100 mx-auto"></div>
       </section>
 
-      {/* Countdown */}
+      {/* Countdown Timer */}
       <section className="py-20 px-8 bg-white border-y border-stone-50">
         <div className="max-w-4xl mx-auto text-center">
             <p className="text-[10px] uppercase tracking-[0.6em] text-stone-400 font-bold mb-12">Menanti Detik Bahagia</p>
@@ -335,9 +344,10 @@ const App = () => {
         </div>
       </section>
 
-      {/* Lokasi */}
+      {/* Details Section */}
       <section className="py-40 px-8">
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* Event Time */}
             <div className="bg-white p-16 rounded-[3rem] border border-stone-50 shadow-sm flex flex-col items-center text-center space-y-8 hover:shadow-xl transition-all group">
                 <Calendar className="w-6 h-6 text-[#b08d79] group-hover:scale-110 transition-transform" />
                 <h3 className="uppercase tracking-[0.3em] font-bold text-[10px] text-stone-400">Aturcara Majlis</h3>
@@ -347,6 +357,7 @@ const App = () => {
                 </div>
             </div>
 
+            {/* Event Location */}
             <div className="bg-white p-16 rounded-[3rem] border border-stone-50 shadow-sm flex flex-col items-center text-center space-y-8 hover:shadow-xl transition-all group">
                 <MapPin className="w-6 h-6 text-[#b08d79] group-hover:scale-110 transition-transform" />
                 <h3 className="uppercase tracking-[0.3em] font-bold text-[10px] text-stone-400">Lokasi Majlis</h3>
@@ -365,7 +376,7 @@ const App = () => {
         </div>
       </section>
 
-      {/* RSVP */}
+      {/* RSVP Form */}
       <section className="py-40 px-8 bg-white" id="rsvp">
         <div className="max-w-2xl mx-auto bg-[#faf9f6] rounded-[3rem] p-10 md:p-20 shadow-inner border border-stone-50">
             <div className="text-center mb-16">
@@ -380,6 +391,7 @@ const App = () => {
                     </div>
                     <p className="text-xl font-serif italic text-emerald-900 mb-2">Terima Kasih!</p>
                     <p className="text-stone-500 text-sm">Maklum balas anda telah kami terima.</p>
+                    <button onClick={() => setSubmitted(false)} className="mt-8 text-[9px] uppercase font-bold tracking-widest text-stone-400 hover:text-stone-900">Hantar RSVP Lain</button>
                 </div>
             ) : (
                 <form onSubmit={handleSubmit} className="space-y-10">
@@ -415,6 +427,7 @@ const App = () => {
         </div>
       </section>
 
+      {/* Footer & Admin Toggle */}
       <footer className="py-32 text-center">
          <p className="text-[9px] uppercase tracking-[1em] font-black text-stone-300 mb-10">#AIZATXLAILA</p>
          <button onClick={() => setShowAdminLogin(true)} className="text-[8px] uppercase tracking-widest text-stone-200 hover:text-stone-800 transition-colors font-bold flex items-center gap-2 mx-auto">
