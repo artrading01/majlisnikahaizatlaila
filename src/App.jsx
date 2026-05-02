@@ -4,12 +4,14 @@ import {
   getFirestore, 
   collection, 
   addDoc, 
-  onSnapshot
+  onSnapshot,
+  query
 } from 'firebase/firestore';
 import { 
   getAuth, 
   signInAnonymously, 
-  onAuthStateChanged
+  onAuthStateChanged,
+  signInWithCustomToken
 } from 'firebase/auth';
 import { 
   Heart, 
@@ -26,21 +28,14 @@ import {
   Navigation
 } from 'lucide-react';
 
-// --- KONFIGURASI FIREBASE ANDA ---
-const firebaseConfig = {
-  apiKey: "AIzaSyAvo3MD7-kS7DJsgp0kfQdmRQyglsIzc2o",
-  authDomain: "majlisnikahaizatlaila.firebaseapp.com",
-  projectId: "majlisnikahaizatlaila",
-  storageBucket: "majlisnikahaizatlaila.firebasestorage.app",
-  messagingSenderId: "301347520690",
-  appId: "1:301347520690:web:06e7d407f0a7632a8849ab"
-};
-
+// --- KONFIGURASI FIREBASE ---
+const firebaseConfig = JSON.parse(__firebase_config);
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-const COLLECTION_PATH = "rsvp_responses"; 
+const COLLECTION_NAME = "rsvp_responses"; 
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -86,28 +81,40 @@ const App = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // RULE 3: Auth Before Queries
   useEffect(() => {
-    const login = async () => {
-        try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        } catch (e) { console.error("Auth Error:", e); }
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (e) {
+        console.error("Auth Error:", e);
+      }
     };
-    login();
+    initAuth();
     const unsubscribe = onAuthStateChanged(auth, setUser);
     return () => unsubscribe();
   }, []);
 
+  // Fetch data for Admin (Hanya jalan jika user dah auth & admin dah login)
   useEffect(() => {
     if (!user || !isAdminAuthenticated) return;
-    const rsvpCol = collection(db, 'artifacts', typeof __app_id !== 'undefined' ? __app_id : 'default-app-id', 'public', 'data', COLLECTION_PATH);
-    const unsubRsvp = onSnapshot(rsvpCol, (s) => {
-      const data = s.docs.map(d => ({ id: d.id, ...d.data() }));
-      setRsvpData(data.sort((a, b) => b.timestamp - a.timestamp));
-    }, (e) => console.error("Firestore Read Error:", e));
+
+    // RULE 1: Strict Pathing
+    const rsvpCol = collection(db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME);
+    
+    const unsubRsvp = onSnapshot(rsvpCol, 
+      (s) => {
+        const data = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        // RULE 2: Filter/Sort in Memory
+        setRsvpData(data.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)));
+      }, 
+      (e) => console.error("Firestore Read Error:", e)
+    );
+    
     return () => unsubRsvp();
   }, [user, isAdminAuthenticated]);
 
@@ -144,14 +151,18 @@ const App = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Guard against unauthenticated users (RULE 3)
     if (!form.name || !user) return;
+    
     setLoading(true);
     try {
-      const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', COLLECTION_PATH), {
+      // RULE 1: Strict Pathing
+      const rsvpCol = collection(db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME);
+      await addDoc(rsvpCol, {
         ...form,
-        pax: parseInt(form.pax),
-        timestamp: Date.now()
+        pax: parseInt(form.pax) || 1,
+        timestamp: Date.now(),
+        userId: user.uid
       });
       setSubmitted(true);
     } catch (err) { 
@@ -182,16 +193,20 @@ const App = () => {
                             <tr><th className="p-6">Nama</th><th className="p-6 text-center">Status</th><th className="p-6 text-center">Pax</th><th className="p-6">Ucapan</th></tr>
                         </thead>
                         <tbody className="divide-y divide-stone-100">
-                            {rsvpData.map(r => (
-                                <tr key={r.id} className="hover:bg-stone-50 transition-colors">
-                                    <td className="p-6 font-bold">{r.name}</td>
-                                    <td className="p-6 text-center">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${r.attendance === 'Hadir' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>{r.attendance}</span>
-                                    </td>
-                                    <td className="p-6 text-center font-medium">{r.pax}</td>
-                                    <td className="p-6 italic text-stone-500">{r.wish || '-'}</td>
-                                </tr>
-                            ))}
+                            {rsvpData.length === 0 ? (
+                                <tr><td colSpan="4" className="p-10 text-center text-stone-400 italic">Tiada data RSVP ditemui.</td></tr>
+                            ) : (
+                                rsvpData.map(r => (
+                                    <tr key={r.id} className="hover:bg-stone-50 transition-colors">
+                                        <td className="p-6 font-bold">{r.name}</td>
+                                        <td className="p-6 text-center">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${r.attendance === 'Hadir' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>{r.attendance}</span>
+                                        </td>
+                                        <td className="p-6 text-center font-medium">{r.pax}</td>
+                                        <td className="p-6 italic text-stone-500">{r.wish || '-'}</td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -253,21 +268,14 @@ const App = () => {
         </button>
       </div>
 
-      {/* Hero Section with Arch Design */}
+      {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center text-center p-8 overflow-hidden">
-        {/* Arch Visual Element */}
         <div className="absolute inset-x-8 top-16 bottom-16 border-[1px] border-[#d4bdad]/30 rounded-t-[500px] pointer-events-none z-0"></div>
         <div className="absolute inset-x-12 top-20 bottom-20 border-[1px] border-[#d4bdad]/10 rounded-t-[500px] pointer-events-none z-0"></div>
-
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute top-10 left-10 w-64 h-64 border border-stone-400 rounded-full blur-3xl bg-stone-200"></div>
-            <div className="absolute bottom-10 right-10 w-64 h-64 border border-stone-400 rounded-full blur-3xl bg-stone-200"></div>
-        </div>
 
         <div className="z-10 flex flex-col items-center">
             <Sparkles className="w-5 h-5 text-[#d4bdad] mb-12 opacity-50" />
             <p className="text-[10px] uppercase tracking-[0.8em] text-stone-400 mb-8 font-black">Walimatulurus</p>
-            
             <div className="relative">
                 <h1 className="text-7xl md:text-9xl font-script text-[#b08d79] mb-4">Aizat</h1>
                 <div className="flex items-center justify-center gap-6 my-4 opacity-30">
@@ -277,7 +285,6 @@ const App = () => {
                 </div>
                 <h1 className="text-7xl md:text-9xl font-script text-[#b08d79] mb-4">Laila</h1>
             </div>
-
             <p className="text-[12px] font-bold uppercase tracking-[0.4em] mt-12 text-stone-800">Sabtu | 06.06.2026</p>
             <button onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })} className="mt-24 text-stone-300 hover:text-stone-800 transition-colors">
                 <ChevronDown className="w-6 h-6 animate-bounce" />
@@ -360,6 +367,7 @@ const App = () => {
                     </div>
                     <p className="text-xl font-serif italic text-emerald-900 mb-2">Terima Kasih!</p>
                     <p className="text-stone-500 text-sm">Maklum balas anda telah kami terima.</p>
+                    <button onClick={() => setSubmitted(false)} className="mt-8 text-[9px] uppercase font-bold tracking-widest text-stone-400 hover:text-stone-900">Hantar RSVP Lain</button>
                 </div>
             ) : (
                 <form onSubmit={handleSubmit} className="space-y-10">
@@ -420,8 +428,6 @@ const App = () => {
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in { animation: fadeIn 1s ease-out forwards; }
-        
-        /* Hide scrollbar */
         ::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
