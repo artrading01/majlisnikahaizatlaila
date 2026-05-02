@@ -147,21 +147,7 @@ const App = () => {
     setIsOpen(true);
     setView('invitation');
     if (audioRef.current) {
-      audioRef.current.play().catch(e => console.log("Audio play blocked"));
-      setIsPlaying(true);
-    }
-  };
-
-  const toggleMusic = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play().catch(e => console.log("Audio error"));
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
+  
 
   const handleAdminLogin = (e) => {
     e.preventDefault();
