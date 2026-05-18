@@ -169,17 +169,26 @@ const App = () => {
           VIEW 1: SKRIN COVER PAGE (INTRO) 
       ========================================= */}
       {!isOpened && (
-        <div className="min-h-screen bg-[#faf9f6] flex flex-col items-center justify-center p-8 text-center animate-fade-in relative overflow-hidden text-[#2c2c2c]">
-          <div className="absolute inset-x-8 top-16 bottom-16 border-[1px] border-[#d4bdad]/30 rounded-t-[500px] pointer-events-none z-0"></div>
+        <div className="min-h-screen bg-gradient-to-b from-[#faf9f6] to-[#eae4dd] flex flex-col items-center justify-center p-8 text-center animate-fade-in relative overflow-hidden text-[#2c2c2c]">
+          {/* Enhanced Double Arch Design */}
+          <div className="absolute inset-x-4 md:inset-x-12 top-10 bottom-10 bg-white border border-[#bc9b87]/30 rounded-t-[500px] shadow-2xl shadow-[#8b6852]/10 pointer-events-none z-0"></div>
+          <div className="absolute inset-x-8 md:inset-x-16 top-14 bottom-14 border-[1px] border-[#bc9b87]/60 rounded-t-[500px] pointer-events-none z-0"></div>
           
-          <div className="z-10 flex flex-col items-center">
-            <p className="text-[10px] uppercase tracking-[0.6em] text-stone-400 mb-8 font-black">Jemputan Majlis Pernikahan</p>
-            <h1 className="text-6xl md:text-8xl font-script text-[#b08d79] mb-4">Aizat & Laila</h1>
+          <div className="z-10 flex flex-col items-center text-center w-full px-4">
+            {/* Elegant Top Ornament */}
+            <div className="flex items-center justify-center gap-4 mb-8 opacity-80 w-full">
+              <div className="w-10 h-px bg-[#8b6852]"></div>
+              <Sparkles className="w-5 h-5 text-[#8b6852]" />
+              <div className="w-10 h-px bg-[#8b6852]"></div>
+            </div>
+            
+            <p className="text-[10px] uppercase tracking-[0.6em] text-stone-500 mb-8 font-black text-center w-full">Jemputan Majlis Pernikahan</p>
+            <h1 className="text-6xl md:text-8xl font-script text-[#8b6852] mb-4 drop-shadow-sm text-center w-full">Aizat & Laila</h1>
             
             {guestName && (
-              <div className="mt-8 mb-4">
-                <p className="text-xs uppercase tracking-widest text-stone-500 mb-2">Istimewa Buat:</p>
-                <p className="text-2xl font-serif italic text-stone-800">{guestName}</p>
+              <div className="mt-8 mb-4 bg-white/60 backdrop-blur-sm px-10 py-6 rounded-3xl border border-[#bc9b87]/30 shadow-sm text-center">
+                <p className="text-[10px] uppercase tracking-widest text-stone-500 mb-2 font-bold">Istimewa Buat:</p>
+                <p className="text-3xl font-serif italic text-stone-800">{guestName}</p>
               </div>
             )}
             
@@ -192,7 +201,7 @@ const App = () => {
                 }
                 setIsOpened(true);
               }}
-              className="mt-12 px-8 py-4 bg-stone-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-xl hover:bg-black transition-all active:scale-95 animate-bounce"
+              className="mt-16 px-10 py-5 bg-[#8b6852] text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-[0_10px_30px_rgba(139,104,82,0.4)] hover:bg-[#725441] hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(139,104,82,0.5)] transition-all duration-300 flex items-center gap-3"
             >
               Buka Undangan
             </button>
@@ -206,7 +215,7 @@ const App = () => {
       {isOpened && view === 'admin' && !isAdminAuthenticated && (
         <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center p-8 animate-fade-in">
           <div className="bg-white p-10 rounded-[2rem] shadow-xl max-w-sm w-full text-center border border-stone-100">
-            <Lock className="w-10 h-10 text-[#d4bdad] mx-auto mb-6" />
+            <Lock className="w-10 h-10 text-[#bc9b87] mx-auto mb-6" />
             <h2 className="text-xl font-bold uppercase tracking-widest mb-6">Akses Admin</h2>
             <input 
               type="password" 
@@ -243,19 +252,19 @@ const App = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white p-8 rounded-[2rem] border shadow-sm">
-                <p className="text-[10px] font-bold text-stone-400 mb-2 tracking-widest uppercase">Jumlah Rekod</p>
-                <p className="text-5xl font-light text-[#b08d79]">{rsvpData.length}</p>
+                <p className="text-[10px] font-bold text-stone-500 mb-2 tracking-widest uppercase">Jumlah Rekod</p>
+                <p className="text-5xl font-light text-[#8b6852]">{rsvpData.length}</p>
               </div>
               <div className="bg-white p-8 rounded-[2rem] border shadow-sm">
-                <p className="text-[10px] font-bold text-stone-400 mb-2 tracking-widest uppercase">Jumlah Hadir (Pax)</p>
-                <p className="text-5xl font-light text-[#b08d79]">{hadirCount} <span className="text-lg text-stone-400">/ {paxCount} pax</span></p>
+                <p className="text-[10px] font-bold text-stone-500 mb-2 tracking-widest uppercase">Jumlah Hadir (Pax)</p>
+                <p className="text-5xl font-light text-[#8b6852]">{hadirCount} <span className="text-lg text-stone-400">/ {paxCount} pax</span></p>
               </div>
             </div>
 
             <div className="bg-white rounded-[2rem] border shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                  <thead className="text-[10px] uppercase tracking-widest text-stone-400 bg-stone-50 border-b border-stone-100">
+                  <thead className="text-[10px] uppercase tracking-widest text-stone-500 bg-stone-50 border-b border-stone-100">
                     <tr>
                       <th className="px-8 py-6">Nama</th>
                       <th className="px-8 py-6">Kehadiran</th>
@@ -292,7 +301,7 @@ const App = () => {
           VIEW 4: SKRIN UTAMA (KAD JEMPUTAN) 
       ========================================= */}
       {isOpened && view === 'invitation' && (
-        <div className="min-h-screen bg-[#faf9f6] text-[#2c2c2c] selection:bg-[#d4bdad] animate-fade-in relative">
+        <div className="min-h-screen bg-[#faf9f6] text-[#2c2c2c] selection:bg-[#bc9b87] animate-fade-in relative">
           
           {/* Floating Audio Button */}
           <div className="fixed top-6 right-6 z-50 animate-fade-in">
@@ -304,42 +313,42 @@ const App = () => {
             </button>
           </div>
 
-          <section className="relative min-h-screen flex items-center justify-center text-center p-8 overflow-hidden">
-            <div className="absolute inset-x-8 top-16 bottom-16 border-[1px] border-[#d4bdad]/30 rounded-t-[500px] pointer-events-none z-0"></div>
-            <div className="absolute inset-x-12 top-20 bottom-20 border-[1px] border-[#d4bdad]/10 rounded-t-[500px] pointer-events-none z-0"></div>
+          <section className="relative min-h-screen flex items-center justify-center text-center p-8 overflow-hidden bg-gradient-to-b from-[#faf9f6] to-white">
+            <div className="absolute inset-x-4 md:inset-x-12 top-10 bottom-10 bg-[#faf9f6] border border-[#bc9b87]/30 rounded-t-[500px] pointer-events-none z-0"></div>
+            <div className="absolute inset-x-8 md:inset-x-16 top-14 bottom-14 border-[1px] border-[#bc9b87]/60 rounded-t-[500px] pointer-events-none z-0"></div>
 
-            <div className="z-10 flex flex-col items-center">
-              <Sparkles className="w-5 h-5 text-[#d4bdad] mb-12 opacity-50" />
-              <p className="text-[10px] uppercase tracking-[0.8em] text-stone-400 mb-8 font-black">Majlis Pernikahan</p>
+            <div className="z-10 flex flex-col items-center mt-10 text-center w-full px-4">
+              <Sparkles className="w-5 h-5 text-[#8b6852] mb-10 opacity-80" />
+              <p className="text-[10px] uppercase tracking-[0.8em] text-stone-500 mb-8 font-black text-center w-full">Majlis Pernikahan</p>
               
-              <div className="relative">
-                <h1 className="text-7xl md:text-9xl font-script text-[#b08d79] mb-4">Aizat</h1>
-                <div className="flex items-center justify-center gap-6 my-4 opacity-30">
-                    <div className="h-px w-10 bg-stone-800"></div>
-                    <span className="serif italic text-xl">&</span>
-                    <div className="h-px w-10 bg-stone-800"></div>
+              <div className="relative w-full text-center">
+                <h1 className="text-7xl md:text-9xl font-script text-[#8b6852] mb-4 drop-shadow-sm text-center w-full">Aizat</h1>
+                <div className="flex items-center justify-center gap-6 my-4 opacity-50 w-full">
+                    <div className="h-px w-12 bg-[#8b6852]"></div>
+                    <span className="serif italic text-3xl text-[#8b6852]">&</span>
+                    <div className="h-px w-12 bg-[#8b6852]"></div>
                 </div>
-                <h1 className="text-7xl md:text-9xl font-script text-[#b08d79] mb-4">Laila</h1>
+                <h1 className="text-7xl md:text-9xl font-script text-[#8b6852] mb-4 drop-shadow-sm text-center w-full">Laila</h1>
               </div>
               
-              <p className="text-[12px] font-bold uppercase tracking-[0.4em] mt-12 text-stone-800">Sabtu | 06.06.2026</p>
-              <button onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })} className="mt-24 text-stone-300 hover:text-stone-800 transition-colors">
+              <p className="text-[12px] font-bold uppercase tracking-[0.4em] mt-12 text-stone-800 text-center w-full">Sabtu | 06.06.2026</p>
+              <button onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })} className="mt-24 text-[#8b6852] hover:text-stone-800 transition-colors mx-auto">
                 <ChevronDown className="w-6 h-6 animate-bounce" />
               </button>
             </div>
           </section>
 
           <section className="py-40 px-8 max-w-4xl mx-auto text-center">
-            <Quote className="w-6 h-6 text-[#d4bdad] mx-auto mb-10 opacity-30" />
+            <Quote className="w-6 h-6 text-[#bc9b87] mx-auto mb-10 opacity-50" />
             <p className="text-xl md:text-2xl font-serif italic text-stone-600 leading-relaxed font-light">
               "Ya Allah, pancarkanlah cahaya kasih-Mu ke dalam hati mereka, jadikanlah ikatan ini jambatan ke syurga, dan hiasilah rumah tangga mereka dengan bauan syurga yang penuh ketenangan dan kesetiaan."
             </p>
-            <div className="mt-12 h-px w-20 bg-stone-100 mx-auto"></div>
+            <div className="mt-12 h-px w-20 bg-stone-200 mx-auto"></div>
           </section>
 
-          <section className="py-20 px-8 bg-white border-y border-stone-50">
+          <section className="py-20 px-8 bg-white border-y border-stone-100">
             <div className="max-w-4xl mx-auto text-center">
-              <p className="text-[10px] uppercase tracking-[0.6em] text-stone-400 font-bold mb-12">Menanti Detik Bahagia</p>
+              <p className="text-[10px] uppercase tracking-[0.6em] text-stone-500 font-bold mb-12">Menanti Detik Bahagia</p>
               <div className="flex justify-center items-center gap-6 md:gap-16">
                 {[
                   { label: 'Hari', value: timeLeft.hari },
@@ -348,8 +357,8 @@ const App = () => {
                   { label: 'Saat', value: timeLeft.saat }
                 ].map((t, i) => (
                   <div key={i} className="flex flex-col items-center">
-                    <span className="text-4xl md:text-6xl font-light text-[#b08d79] mb-2">{String(t.value).padStart(2, '0')}</span>
-                    <span className="text-[9px] uppercase tracking-widest text-stone-400 font-bold">{t.label}</span>
+                    <span className="text-4xl md:text-6xl font-light text-[#8b6852] mb-2">{String(t.value).padStart(2, '0')}</span>
+                    <span className="text-[9px] uppercase tracking-widest text-stone-500 font-bold">{t.label}</span>
                   </div>
                 ))}
               </div>
@@ -358,26 +367,26 @@ const App = () => {
 
           <section className="py-40 px-8">
             <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div className="bg-white p-16 rounded-[3rem] border border-stone-50 shadow-sm flex flex-col items-center text-center space-y-8 hover:shadow-xl transition-all group">
-                <Calendar className="w-6 h-6 text-[#b08d79] group-hover:scale-110 transition-transform" />
-                <h3 className="uppercase tracking-[0.3em] font-bold text-[10px] text-stone-400">Aturcara Majlis</h3>
+              <div className="bg-white p-16 rounded-[3rem] border border-stone-100 shadow-sm flex flex-col items-center text-center space-y-8 hover:shadow-xl transition-all group">
+                <Calendar className="w-6 h-6 text-[#8b6852] group-hover:scale-110 transition-transform" />
+                <h3 className="uppercase tracking-[0.3em] font-bold text-[10px] text-stone-500">Aturcara Majlis</h3>
                 <div className="space-y-2">
-                  <p className="text-2xl font-serif italic">Sabtu, 6 Jun 2026</p>
+                  <p className="text-2xl font-serif italic text-stone-800">Sabtu, 6 Jun 2026</p>
                   <p className="text-stone-500 font-medium">9:00 Pagi - Selesai</p>
                 </div>
               </div>
 
-              <div className="bg-white p-16 rounded-[3rem] border border-stone-50 shadow-sm flex flex-col items-center text-center space-y-8 hover:shadow-xl transition-all group">
-                <MapPin className="w-6 h-6 text-[#b08d79] group-hover:scale-110 transition-transform" />
-                <h3 className="uppercase tracking-[0.3em] font-bold text-[10px] text-stone-400">Lokasi Majlis</h3>
+              <div className="bg-white p-16 rounded-[3rem] border border-stone-100 shadow-sm flex flex-col items-center text-center space-y-8 hover:shadow-xl transition-all group">
+                <MapPin className="w-6 h-6 text-[#8b6852] group-hover:scale-110 transition-transform" />
+                <h3 className="uppercase tracking-[0.3em] font-bold text-[10px] text-stone-500">Lokasi Majlis</h3>
                 <div className="space-y-3">
-                  <p className="text-xl font-serif italic leading-tight">Masjid Jamek Cina Muslim Klang</p>
-                  <p className="text-[11px] text-stone-400 uppercase tracking-wider max-w-[250px] mx-auto">
+                  <p className="text-xl font-serif italic text-stone-800 leading-tight">Masjid Jamek Cina Muslim Klang</p>
+                  <p className="text-[11px] text-stone-500 uppercase tracking-wider max-w-[250px] mx-auto">
                     Lot 157828, Jalan Langat, Bandar Botanik, 41200 Klang, Selangor
                   </p>
                 </div>
                 <div className="flex gap-4 pt-4">
-                  <a href="https://www.google.com/maps/search/?api=1&query=Masjid+Jamek+Cina+Muslim+Klang" target="_blank" rel="noreferrer" className="px-6 py-3 bg-stone-900 text-white rounded-full text-[9px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-colors">
+                  <a href="https://www.google.com/maps/search/?api=1&query=Masjid+Jamek+Cina+Muslim+Klang" target="_blank" rel="noreferrer" className="px-6 py-3 bg-stone-900 text-white rounded-full text-[9px] font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-[#8b6852] transition-colors shadow-lg">
                     <Navigation className="w-3 h-3" /> Maps
                   </a>
                 </div>
@@ -388,7 +397,7 @@ const App = () => {
           <section className="py-40 px-8 bg-white" id="rsvp">
             <div className="max-w-2xl mx-auto bg-[#faf9f6] rounded-[3rem] p-10 md:p-20 shadow-inner border border-stone-50">
               <div className="text-center mb-16">
-                <h2 className="text-3xl font-serif italic mb-4">Pengesahan Kehadiran</h2>
+                <h2 className="text-3xl font-serif italic mb-4 text-[#8b6852]">Pengesahan Kehadiran</h2>
                 <p className="text-stone-500 text-sm">Sila sahkan kehadiran anda sebelum 1 Jun 2026</p>
               </div>
 
@@ -399,37 +408,37 @@ const App = () => {
                   </div>
                   <p className="text-xl font-serif italic text-emerald-900 mb-2">Terima Kasih!</p>
                   <p className="text-stone-500 text-sm">Maklum balas anda telah kami terima.</p>
-                  <button onClick={() => setSubmitted(false)} className="mt-8 text-[9px] uppercase font-bold tracking-widest text-stone-400 hover:text-stone-900">Hantar RSVP Lain</button>
+                  <button onClick={() => setSubmitted(false)} className="mt-8 text-[9px] uppercase font-bold tracking-widest text-[#8b6852] hover:text-stone-900 transition-colors">Hantar RSVP Lain</button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-10">
                   {errorMessage && <p className="text-red-500 text-[10px] font-bold uppercase">{errorMessage}</p>}
                   
                   <div className="space-y-1">
-                    <label className="text-[9px] uppercase font-bold tracking-widest text-stone-400 px-1">Nama Penuh</label>
-                    <input required value={form.name} onChange={(e)=>setForm({...form, name: e.target.value})} className="w-full bg-transparent border-b border-stone-200 py-4 outline-none focus:border-[#b08d79] transition-colors text-sm" placeholder="Contoh: Ahmad Fauzi" />
+                    <label className="text-[9px] uppercase font-bold tracking-widest text-stone-500 px-1">Nama Penuh</label>
+                    <input required value={form.name} onChange={(e)=>setForm({...form, name: e.target.value})} className="w-full bg-transparent border-b border-stone-200 py-4 outline-none focus:border-[#8b6852] transition-colors text-sm" placeholder="Contoh: Ahmad Fauzi" />
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-1">
-                      <label className="text-[9px] uppercase font-bold tracking-widest text-stone-400 px-1">Kehadiran</label>
-                      <select value={form.attendance} onChange={(e)=>setForm({...form, attendance: e.target.value})} className="w-full bg-transparent border-b border-stone-200 py-4 outline-none text-sm appearance-none cursor-pointer">
+                      <label className="text-[9px] uppercase font-bold tracking-widest text-stone-500 px-1">Kehadiran</label>
+                      <select value={form.attendance} onChange={(e)=>setForm({...form, attendance: e.target.value})} className="w-full bg-transparent border-b border-stone-200 py-4 outline-none text-sm appearance-none cursor-pointer focus:border-[#8b6852] transition-colors">
                         <option value="Hadir">Akan Hadir</option>
                         <option value="Tidak Hadir">Tidak Hadir</option>
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[9px] uppercase font-bold tracking-widest text-stone-400 px-1">Bilangan Pax</label>
-                      <input type="number" min="1" value={form.pax} onChange={(e)=>setForm({...form, pax: e.target.value})} className="w-full bg-transparent border-b border-stone-200 py-4 outline-none text-sm" placeholder="1" />
+                      <label className="text-[9px] uppercase font-bold tracking-widest text-stone-500 px-1">Bilangan Pax</label>
+                      <input type="number" min="1" value={form.pax} onChange={(e)=>setForm({...form, pax: e.target.value})} className="w-full bg-transparent border-b border-stone-200 py-4 outline-none text-sm focus:border-[#8b6852] transition-colors" placeholder="1" />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[9px] uppercase font-bold tracking-widest text-stone-400 px-1">Ucapan & Doa</label>
-                    <textarea value={form.wish} onChange={(e)=>setForm({...form, wish: e.target.value})} rows="4" className="w-full bg-transparent border-b border-stone-200 py-4 outline-none focus:border-[#b08d79] transition-colors text-sm resize-y leading-relaxed" placeholder="Tuliskan ucapan anda..."></textarea>
+                    <label className="text-[9px] uppercase font-bold tracking-widest text-stone-500 px-1">Ucapan & Doa</label>
+                    <textarea value={form.wish} onChange={(e)=>setForm({...form, wish: e.target.value})} rows="4" className="w-full bg-transparent border-b border-stone-200 py-4 outline-none focus:border-[#8b6852] transition-colors text-sm resize-y leading-relaxed" placeholder="Tuliskan ucapan anda..."></textarea>
                   </div>
 
-                  <button disabled={loading} className="w-full bg-stone-950 text-white py-6 rounded-2xl font-black uppercase tracking-[0.4em] text-[10px] shadow-xl hover:bg-black transition-all active:scale-95 disabled:opacity-50">
+                  <button disabled={loading} className="w-full bg-stone-950 text-white py-6 rounded-2xl font-black uppercase tracking-[0.4em] text-[10px] shadow-xl hover:bg-[#8b6852] transition-all active:scale-95 disabled:opacity-50">
                     {loading ? 'Menghantar...' : 'Hantar RSVP'}
                   </button>
                 </form>
@@ -439,7 +448,7 @@ const App = () => {
 
           <footer className="py-32 text-center">
             <p className="text-[9px] uppercase tracking-[1em] font-black text-stone-300 mb-10">#AIZATXLAILA</p>
-            <button onClick={() => setView('admin')} className="text-[8px] uppercase tracking-widest text-stone-200 hover:text-stone-800 transition-colors font-bold flex items-center gap-2 mx-auto">
+            <button onClick={() => setView('admin')} className="text-[8px] uppercase tracking-widest text-stone-300 hover:text-[#8b6852] transition-colors font-bold flex items-center gap-2 mx-auto">
               <Lock className="w-3 h-3" /> Admin Panel
             </button>
           </footer>
