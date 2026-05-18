@@ -173,7 +173,7 @@ const App = () => {
           <div className="absolute inset-x-8 top-16 bottom-16 border-[1px] border-[#d4bdad]/30 rounded-t-[500px] pointer-events-none z-0"></div>
           
           <div className="z-10 flex flex-col items-center">
-            <p className="text-[10px] uppercase tracking-[0.8em] text-stone-400 mb-8 font-black">Jemputan Majlis Pernikahan</p>
+            <p className="text-[10px] uppercase tracking-[0.6em] text-stone-400 mb-8 font-black">Jemputan Majlis Pernikahan</p>
             <h1 className="text-6xl md:text-8xl font-script text-[#b08d79] mb-4">Aizat & Laila</h1>
             
             {guestName && (
