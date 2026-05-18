@@ -173,7 +173,7 @@ const App = () => {
           <div className="absolute inset-x-8 top-16 bottom-16 border-[1px] border-[#d4bdad]/30 rounded-t-[500px] pointer-events-none z-0"></div>
           
           <div className="z-10 flex flex-col items-center">
-            <p className="text-[10px] uppercase tracking-[0.8em] text-stone-400 mb-8 font-black">Walimatulurus</p>
+            <p className="text-[10px] uppercase tracking-[0.8em] text-stone-400 mb-8 font-black">Jemputan Majlis Pernikahan</p>
             <h1 className="text-6xl md:text-8xl font-script text-[#b08d79] mb-4">Aizat & Laila</h1>
             
             {guestName && (
@@ -310,7 +310,7 @@ const App = () => {
 
             <div className="z-10 flex flex-col items-center">
               <Sparkles className="w-5 h-5 text-[#d4bdad] mb-12 opacity-50" />
-              <p className="text-[10px] uppercase tracking-[0.8em] text-stone-400 mb-8 font-black">Walimatulurus</p>
+              <p className="text-[10px] uppercase tracking-[0.8em] text-stone-400 mb-8 font-black">Majlis Pernikahan</p>
               
               <div className="relative">
                 <h1 className="text-7xl md:text-9xl font-script text-[#b08d79] mb-4">Aizat</h1>
