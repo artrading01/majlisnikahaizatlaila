@@ -44,7 +44,7 @@ const COLLECTION_NAME = "rsvp_responses";
 const App = () => {
   // STATE MANAGEMENT
   const [view, setView] = useState('invitation'); // 'invitation' atau 'admin'
-  const [isOpened, setIsOpened] = useState(false); // Untuk skrin Buka Undangan (Bypass Safari Autoplay)
+  const [isOpened, setIsOpened] = useState(false); // Untuk skrin Buka Undangan
   const [isPlaying, setIsPlaying] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ hari: 0, jam: 0, minit: 0, saat: 0 });
   const [user, setUser] = useState(null);
@@ -58,7 +58,6 @@ const App = () => {
   // Admin State
   const [adminPin, setAdminPin] = useState('');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   
   const [guestName, setGuestName] = useState('');
@@ -107,9 +106,6 @@ const App = () => {
   // 4. Fetch RSVP Data (Admin Only)
   useEffect(() => {
     if (!user || !isAdminAuthenticated) return;
-
-    // Untuk memastikan rules tepat, pastikan struktur ini sama di Firestore jika perlu,
-    // Jika tak pakai rules ketat, boleh guna collection(db, COLLECTION_NAME) terus.
     const rsvpCol = collection(db, COLLECTION_NAME); 
     
     const unsubRsvp = onSnapshot(rsvpCol, 
@@ -284,7 +280,7 @@ const App = () => {
                           </span>
                         </td>
                         <td className="px-8 py-6 font-medium">{r.attendance === 'Hadir' ? r.pax : '-'}</td>
-                        <td className="px-8 py-6 text-stone-500 italic max-w-xs truncate">{r.wish || '-'}</td>
+                        <td className="px-8 py-6 text-stone-500 italic whitespace-pre-wrap break-words min-w-[300px] leading-relaxed">{r.wish || '-'}</td>
                       </tr>
                     ))
                   )}
@@ -301,9 +297,7 @@ const App = () => {
   return (
     <div className="min-h-screen bg-[#faf9f6] text-[#2c2c2c] selection:bg-[#d4bdad] animate-fade-in relative">
       
-      {/* SILA LETAK FAIL AUDIO (cth: lagu.mp3) DI DALAM FOLDER "public" VITE ANDA
-        DAN TUKAR src DI BAWAH KEPADA "/lagu.mp3"
-      */}
+      {/* SILA LETAK FAIL AUDIO (cth: music.mp3) DI DALAM FOLDER "public" VITE ANDA */}
       <audio ref={audioRef} loop playsInline preload="auto">
         <source src="/music.mp3" type="audio/mpeg" />
       </audio>
@@ -447,7 +441,7 @@ const App = () => {
 
               <div className="space-y-1">
                 <label className="text-[9px] uppercase font-bold tracking-widest text-stone-400 px-1">Ucapan & Doa</label>
-                <textarea value={form.wish} onChange={(e)=>setForm({...form, wish: e.target.value})} rows="1" className="w-full bg-transparent border-b border-stone-200 py-4 outline-none focus:border-[#b08d79] transition-colors text-sm resize-none" placeholder="Tuliskan ucapan anda..."></textarea>
+                <textarea value={form.wish} onChange={(e)=>setForm({...form, wish: e.target.value})} rows="4" className="w-full bg-transparent border-b border-stone-200 py-4 outline-none focus:border-[#b08d79] transition-colors text-sm resize-y leading-relaxed" placeholder="Tuliskan ucapan anda..."></textarea>
               </div>
 
               <button disabled={loading} className="w-full bg-stone-950 text-white py-6 rounded-2xl font-black uppercase tracking-[0.4em] text-[10px] shadow-xl hover:bg-black transition-all active:scale-95 disabled:opacity-50">
