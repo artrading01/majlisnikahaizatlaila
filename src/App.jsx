@@ -281,7 +281,7 @@ const App = () => {
   return (
     <div className="min-h-screen bg-[#faf9f6] text-[#2c2c2c] selection:bg-[#d4bdad] animate-fade-in">
       <audio ref={audioRef} loop preload="auto">
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
+        <source src="file:///C:/Users/Aizat/Downloads/Janji%20Suci%20-%20Yovie%20&%20Nuno%20(KARAOKE%20PIANO%20-%20FEMALE%20KEY).mp3" type="audio/mpeg" />
       </audio>
 
       <div className="fixed bottom-8 right-8 z-[100]">
