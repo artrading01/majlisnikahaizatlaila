@@ -38,7 +38,7 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-const appId = 'majlis-aizat-laila';
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'majlis-aizat-laila';
 const COLLECTION_NAME = "rsvp_responses"; 
 
 const App = () => {
@@ -106,7 +106,7 @@ const App = () => {
   // 4. Fetch RSVP Data (Admin Only)
   useEffect(() => {
     if (!user || !isAdminAuthenticated) return;
-    const rsvpCol = collection(db, COLLECTION_NAME); 
+    const rsvpCol = collection(db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME); 
     
     const unsubRsvp = onSnapshot(rsvpCol, 
       (s) => {
@@ -132,7 +132,7 @@ const App = () => {
     setLoading(true);
     setErrorMessage('');
     try {
-      const rsvpCol = collection(db, COLLECTION_NAME);
+      const rsvpCol = collection(db, 'artifacts', appId, 'public', 'data', COLLECTION_NAME);
       await addDoc(rsvpCol, {
         ...form,
         pax: parseInt(form.pax),
