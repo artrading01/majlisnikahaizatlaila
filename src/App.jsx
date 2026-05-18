@@ -1,3 +1,5 @@
+Ni code app.js:
+
 getFirestore, 
 collection, 
 addDoc, 
