@@ -62,7 +62,7 @@ const App = () => {
   
   const [guestName, setGuestName] = useState('');
   const audioRef = useRef(null);
-  const CORRECT_PIN = "1234";
+  const CORRECT_PIN = "8908";
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
